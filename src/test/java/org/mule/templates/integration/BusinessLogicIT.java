@@ -1,3 +1,9 @@
+/**
+ * Mule Anypoint Template
+ *
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ */
+
 package org.mule.templates.integration;
 
 import static junit.framework.Assert.assertEquals;
@@ -53,7 +59,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 	public static void init(){
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.MINUTE, -3);
+		cal.add(Calendar.MINUTE, -5);
 		System.setProperty("migration.startDate", "\"" + sdf.format(cal.getTime()) + "\"");
 	}
 	

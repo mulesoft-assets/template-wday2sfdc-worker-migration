@@ -44,7 +44,7 @@ There are a couple of things you should take into account before running this An
 3. **Working with sandboxes for the same account**: Although each sandbox should be a completely different environment, Usernames cannot be repeated in different sandboxes, i.e. if you have a user with username *bob.dylan* in *sandbox A*, you will not be able to create another user with username *bob.dylan* in *sandbox B*. If you are indeed working with Sandboxes for the same SalesForce account you will need to map the source username to a different one in the target sandbox, for this purpose, please refer to the processor labeled *setup Worker for upsert*.
 4. **Workday email uniqueness**: The email can be repeated for two or more accounts (or missing). Therefore Workday accounts with duplicate emails will be removed from processing in the Input stage.
 
-
+**IMPORTANT**: Cloudhub currently supports JRE version 1.6_x. Please make sure that your application is not built with newer JRE version.
 
 ## Salesforce Considerations <a name="salesforceconsiderations"/>
 
