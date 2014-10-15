@@ -59,8 +59,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 	public static void init(){
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.MINUTE, -5);
-		System.setProperty("migration.startDate", "\"" + sdf.format(cal.getTime()) + "\"");
+		System.setProperty("migration.startDate", "\"" + sdf.format(cal.getTime()) + "\"");	
 	}
 	
 	@Before
@@ -69,7 +68,6 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 
 		retrieveUserFlow = getSubFlow("retrieveUserSFDC");
 		retrieveUserFlow.initialise();
-
 		createTestDataInSandBox();
 	}
 
@@ -80,7 +78,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 
 	@Test
 	public void testMainFlow() throws Exception {
-
+		Thread.sleep(20000);
 		runFlow("mainFlow");
 
 		// Wait for the batch job executed by the poll flow to finish
@@ -93,8 +91,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 				user);
 		SFDC_ID = payload.get("Id").toString();
 		
-		assertEquals("The user should have been sync",
-				EMAIL, payload.get("Email"));
+		assertEquals("The user should have been sync", EXT_ID, payload.get("FirstName"));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -103,8 +100,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 		flow.initialise();
 		logger.info("creating a workday employee...");
 		try {
-			MuleEvent res = flow.process(getTestEvent(prepareNewHire(), MessageExchangePattern.REQUEST_RESPONSE));			
-			System.out.println("res:" + res.getMessage().getPayloadAsString());
+			flow.process(getTestEvent(prepareNewHire(), MessageExchangePattern.REQUEST_RESPONSE));						
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
