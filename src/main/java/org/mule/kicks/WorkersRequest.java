@@ -35,7 +35,6 @@ public class WorkersRequest {
 		cal.add(Calendar.SECOND, -3);
 		dateRangeData.setUpdatedThrough(xmlDate(cal.getTime()));
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-		
 		dateRangeData.setUpdatedFrom(xmlDate(sdf.parse(startDate)));
 		
 		WorkerRequestCriteriaType crit = new WorkerRequestCriteriaType();

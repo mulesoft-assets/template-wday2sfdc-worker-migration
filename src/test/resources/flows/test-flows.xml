@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/wd-hr http://www.mulesoft.org/schema/mule/wd
     <data-mapper:config name="EmployeeType_To_TerminateEmployeeRequestType" transformationGraphPath="employeetype_to_terminateemployeerequesttype.grf" doc:name="DataMapper"/>
     
     <sub-flow name="retrieveUserSFDC" doc:name="retrieveUserSFDC">
-        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
+        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
     </sub-flow>
     <sub-flow name="hireEmployee" doc:name="hireEmployee">
         <data-mapper:transform config-ref="pojo_to_hireemployeerequesttype" doc:name="Jobvite To HireEmployeeRequestType" />

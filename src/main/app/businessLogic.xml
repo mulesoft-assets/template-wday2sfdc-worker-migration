@@ -76,7 +76,7 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
 					<sfdc:upsert config-ref="Salesforce"  type="User" doc:name="upsert Users in Salesforce" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
 					</sfdc:upsert>
-                    <logger message="sfdc: #[payload]" level="INFO" doc:name="Logger"/>
+
                 </batch:commit>
             </batch:step>
         </batch:process-records>
