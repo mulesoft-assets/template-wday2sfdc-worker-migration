@@ -52,7 +52,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 	protected static final int TIMEOUT_SEC = 60;
 	private static SubflowInterceptingChainLifecycleWrapper retrieveUserFlow;
 	private BatchTestHelper helper;
-	private String EXT_ID, EMAIL = "bwillis@gmailtest.com";
+	private String EXT_ID, EMAIL = "bwillis@gmailtest.com" + System.currentTimeMillis();
 	private String SFDC_ID;
 
 	@BeforeClass
