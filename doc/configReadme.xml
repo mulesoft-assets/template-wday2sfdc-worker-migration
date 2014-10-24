@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <configuration>
 	<placeholders>
-		<placeholder id="template_name">Workday Salesforce Worker Migration</placeholder>
+		<placeholder id="template_name">Workday to Salesforce Worker Migration</placeholder>
 	</placeholders>
 	<sections>
 		<section id="use_case">
 As a Workday admin I want to migrate workers to Salesfoce.
 
-This Anypoint Template should serve as a foundation for the process of migrating Worker from Workday instance to Salesforce, being able to specify filtering criterias and desired behaviour when a user already exists in the destination system. 
+This Anypoint Template should serve as a foundation for the process of migrating Worker from a Workday instance to Salesforce, being able to specify filtering criterias and desired behaviour when a user already exists in the destination system. 
 
 As implemented, this Anypoint Template leverages the [Batch Module](http://www.mulesoft.org/documentation/display/current/Batch+Processing).
 The batch job is divided in Input, Process and On Complete stages.
