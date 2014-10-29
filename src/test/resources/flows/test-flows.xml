@@ -16,8 +16,8 @@ http://www.mulesoft.org/schema/mule/wd-hr http://www.mulesoft.org/schema/mule/wd
     
     <sub-flow name="retrieveUserSFDC" doc:name="retrieveUserSFDC">
         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName,LastName FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
-    </sub-flow>       
-           
+    </sub-flow>
+
     <sub-flow name="updateWorkdayEmployee" doc:name="updateWorkdayEmployee">
         <data-mapper:transform config-ref="Pojo_To_ChangeLegalNameRequestType" doc:name="Pojo To ChangeLegalNameRequestType"/>
         <wd-hr:change-legal-name config-ref="Workday_Human_Resource" doc:name="Workday Human Resource"/>

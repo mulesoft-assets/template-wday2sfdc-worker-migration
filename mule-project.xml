@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<<<<<<< HEAD
 <mule-project xmlns="http://www.mulesoft.com/tooling/project" runtimeId="org.mule.tooling.server.3.5.0.ee" schemaVersion="3.5.0.0">
+=======
+<mule-project xmlns="http://www.mulesoft.com/tooling/project" runtimeId="org.mule.tooling.server.3.5.1.ee" schemaVersion="3.5.0.0">
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
     <name>template-wday2sfdc-worker-migration</name>
     <description></description>
     <muleExtension name="Salesforce" qualifier="org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
     <muleExtension name="Workday Human Resource" qualifier="org.mule.tooling.ui.contribution.wd-hr"/>
+<<<<<<< HEAD
     <muleExtension name="Workday Recruiting" qualifier="org.mule.tooling.ui.contribution.wd-recruiting"/>
     <muleExtension name="Workday Staffing" qualifier="org.mule.tooling.ui.contribution.wd-staffing"/>
+=======
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 </mule-project>

@@ -6,12 +6,20 @@
 	<parent>
 		<groupId>org.mule.templates</groupId>
 		<artifactId>templates-tooling-parent-pom</artifactId>
+<<<<<<< HEAD
 		<version>1.0.0-SNAPSHOT</version>
+=======
+		<version>1.0.7</version>
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 	</parent>
 
 	<artifactId>template-wday2sfdc-worker-migration</artifactId>
 	<packaging>mule</packaging>
+<<<<<<< HEAD
 	<version>1.0.0-SNAPSHOT</version>
+=======
+	<version>1.1.0-SNAPSHOT</version>
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 	<name>template-wday2sfdc-worker-migration Anypoint Template Project</name>
 
 	<properties>
@@ -76,5 +84,10 @@
 		<connection>scm:git:https://github.com/mulesoft/template-wday2sfdc-worker-migration.git</connection>
 		<developerConnection>scm:git:https://github.com/mulesoft/template-wday2sfdc-worker-migration.git</developerConnection>
 		<url>http://github.com/mulesoft/template-wday2sfdc-worker-migration</url>
+<<<<<<< HEAD
 	</scm>
+=======
+	  <tag>HEAD</tag>
+  </scm>
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 </project>

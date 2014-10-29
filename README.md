@@ -1,5 +1,9 @@
 
+<<<<<<< HEAD
 # Anypoint Template: Workday Salesforce Worker Migration
+=======
+# Anypoint Template: Workday to Salesforce Worker Migration
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 
 + [License Agreement](#licenseagreement)
 + [Use Case](#usecase)
@@ -28,7 +32,11 @@ Please review the terms of the license before downloading and using this templat
 # Use Case <a name="usecase"/>
 As a Workday admin I want to migrate workers to Salesfoce.
 
+<<<<<<< HEAD
 This Anypoint Template should serve as a foundation for the process of migrating Worker from Workday instance to Salesforce, being able to specify filtering criteria and desired behaviour when a user already exists in the destination system. 
+=======
+This Anypoint Template should serve as a foundation for the process of migrating Worker from a Workday instance to Salesforce, being able to specify filtering criterias and desired behaviour when a user already exists in the destination system. 
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 
 As implemented, this Anypoint Template leverages the [Batch Module](http://www.mulesoft.org/documentation/display/current/Batch+Processing).
 The batch job is divided in Input, Process and On Complete stages.
@@ -44,7 +52,11 @@ There are a couple of things you should take into account before running this An
 3. **Working with sandboxes for the same account**: Although each sandbox should be a completely different environment, Usernames cannot be repeated in different sandboxes, i.e. if you have a user with username *bob.dylan* in *sandbox A*, you will not be able to create another user with username *bob.dylan* in *sandbox B*. If you are indeed working with Sandboxes for the same SalesForce account you will need to map the source username to a different one in the target sandbox, for this purpose, please refer to the processor labeled *setup Worker for upsert*.
 4. **Workday email uniqueness**: The email can be repeated for two or more accounts (or missing). Therefore Workday accounts with duplicate emails will be removed from processing in the Input stage.
 
+<<<<<<< HEAD
 **IMPORTANT**: Cloudhub currently supports JRE version 1.6_x. Please make sure that your application is not built with newer JRE version.
+=======
+
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 
 ## Salesforce Considerations <a name="salesforceconsiderations"/>
 
@@ -69,7 +81,11 @@ In order to have this template working as expected, you should be aware of your 
 
 ### As destination of data
 
+<<<<<<< HEAD
 There are no particular considerations for this Anypoint Template regarding Siebel as data destination.
+=======
+There are no particular considerations for this Anypoint Template regarding Salesforce as data destination.
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 
 
 ## Workday Considerations <a name="workdayconsiderations"/>
@@ -78,8 +94,14 @@ There are no particular considerations for this Anypoint Template regarding Sieb
 
 There are no particular considerations for this Anypoint Template regarding Workday as data origin.
 
+<<<<<<< HEAD
 # Run it! <a name="runit"/>
 Simple steps to get Workday Salesforce Worker Migration running.
+=======
+
+# Run it! <a name="runit"/>
+Simple steps to get Workday to Salesforce Worker Migration running.
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 In any of the ways you would like to run this Anypoint Template this is an example of the output you'll see after hitting the HTTP endpoint:
 
 <pre>
@@ -127,7 +149,11 @@ After this, to trigger the use case you just need to hit the local http endpoint
 
 ## Running on CloudHub <a name="runoncloudhub"/>
 While [creating your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) (Or you can do it later as a next step), you need to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**.
+<<<<<<< HEAD
 Once your app is all set and started, supposing you choose as domain name `sfdcusermigration` to trigger the use case you just need to hit `http://sfdcusermigration.cloudhub.io/migrateworkers` and report will be sent to the email configured.
+=======
+Once your app is all set and started, supposing you choose as domain name `wdayworkermigration` to trigger the use case you just need to hit `http://wdayworkermigration.cloudhub.io/migrateworkers` and report will be sent to the email configured.
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 
 ### Deploying your Anypoint Template on CloudHub <a name="deployingyouranypointtemplateoncloudhub"/>
 Mule Studio provides you with really easy way to deploy your Template directly to CloudHub, for the specific steps to do so please check this [link](http://www.mulesoft.org/documentation/display/current/Deploying+Mule+Applications#DeployingMuleApplications-DeploytoCloudHub)
@@ -209,7 +235,11 @@ This Anypoint Template has only an [HTTP Inbound Endpoint](http://www.mulesoft.o
 + `${http.port}` is set as a property to be defined either on a property file or in CloudHub environment variables.
 + The path configured by default is `migrateworkers` and you are free to change for the one you prefer.
 + The host name for all endpoints in your CloudHub configuration should be defined as `localhost`. CloudHub will then route requests from your application domain URL to the endpoint.
+<<<<<<< HEAD
 + The endpoint is configured as a *request-response* since as a result of calling it the response will be the total of Users migrated and filtered by the criteria specified.
+=======
++ The endpoint is configured as a *request-response* since as a result of calling it the response will be the total of Workers migrated and filtered by the criteria specified.
+>>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
 
 
 
