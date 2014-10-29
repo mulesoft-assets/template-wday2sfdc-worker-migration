@@ -28,21 +28,6 @@ import com.mulesoft.module.batch.BatchTestHelper;
 /**
  * The objective of this class is to validate the correct behavior of the flows
  * for this Anypoint Tempalte that make calls to external systems.
-=======
-import com.workday.hr.EmployeeGetType;
-import com.workday.hr.EmployeeReferenceType;
-import com.workday.hr.ExternalIntegrationIDReferenceDataType;
-import com.workday.hr.IDType;
-import com.workday.staffing.EventClassificationSubcategoryObjectIDType;
-import com.workday.staffing.EventClassificationSubcategoryObjectType;
-import com.workday.staffing.TerminateEmployeeDataType;
-import com.workday.staffing.TerminateEmployeeRequestType;
-import com.workday.staffing.TerminateEventDataType;
-
-/**
- * The objective of this class is to validate the correct behavior of the flows
- * for this Anypoint Template that make calls to external systems.
->>>>>>> bf3bde4803f417ff7f9542604fd977fc0c331c89
  * 
  */
 public class BusinessLogicIT extends AbstractTemplateTestCase {
