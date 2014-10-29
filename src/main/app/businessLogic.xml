@@ -38,6 +38,7 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
  
             </batch:step>
             <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInSalesforce'] is NullPayload]">
+                <logger message="#[payload] ..... #[recordVars['userInSalesforce']]" level="INFO" doc:name="Logger"/>
                 <choice doc:name="Choice">
                     <when expression="#[org.mule.templates.UserDateComparator.isAfter(payload, recordVars['userInSalesforce'])]">
                         <expression-component doc:name="define Id in SalesForce instance"><![CDATA[// Put ID from the object in B so that SalesForce updates this object
