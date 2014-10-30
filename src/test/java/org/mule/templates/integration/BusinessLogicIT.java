@@ -84,7 +84,6 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 		assertEquals("The user last name should have been sync", testEmployee.getFamilyName(), payload.get("LastName"));
 	}
 
-	@SuppressWarnings("unchecked")
 	private void createTestDataInSandBox() throws MuleException, Exception {
 		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("updateWorkdayEmployee");
 		flow.initialise();
