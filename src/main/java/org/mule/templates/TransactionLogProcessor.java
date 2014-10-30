@@ -6,8 +6,6 @@
 
 package org.mule.templates;
 
-import java.text.SimpleDateFormat;
-
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -52,11 +50,8 @@ public class TransactionLogProcessor implements MessageProcessor{
 				e1.printStackTrace();
 			}
 		}
-		System.out.println("hhh" + lastModifiedDate);
-		System.out.println("hhh" + lastModifiedDate.normalize());
-		System.out.println("hhh" + lastModifiedDate.normalize().toGregorianCalendar().getTime());
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");		
-		event.getMessage().setPayload(lastModifiedDate == null ? null : sdf.format(lastModifiedDate.normalize().toGregorianCalendar().getTime()));
+				
+		event.getMessage().setPayload(lastModifiedDate == null ? null : lastModifiedDate.normalize().toString());
 		return event;
 	}
 	
