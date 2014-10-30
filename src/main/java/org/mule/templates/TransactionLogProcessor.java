@@ -52,8 +52,9 @@ public class TransactionLogProcessor implements MessageProcessor{
 				e1.printStackTrace();
 			}
 		}
+		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");		
-		event.getMessage().setPayload(lastModifiedDate == null ? null : sdf.format(lastModifiedDate.toGregorianCalendar().getTime()));
+		event.getMessage().setPayload(lastModifiedDate == null ? null : sdf.format(lastModifiedDate.normalize().toGregorianCalendar().getTime()));
 		return event;
 	}
 	

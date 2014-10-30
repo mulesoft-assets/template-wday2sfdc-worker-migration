@@ -38,7 +38,7 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
  
             </batch:step>
             <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInSalesforce'] is NullPayload]">
-                <logger message="#[payload] ..... #[recordVars['userInSalesforce']]" level="INFO" doc:name="Logger"/>
+
                 <choice doc:name="Choice">
                     <when expression="#[org.mule.templates.UserDateComparator.isAfter(payload, recordVars['userInSalesforce'])]">
                         <expression-component doc:name="define Id in SalesForce instance"><![CDATA[// Put ID from the object in B so that SalesForce updates this object
@@ -72,7 +72,7 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
  payload.put('Alias', payload['Alias'] == null ? (payload['FirstName'].substring(0, 1) + payload['LastName'].substring(0, payload['LastName'].length() < 7 ? payload['LastName'].length() : 7) ) : payload['Alias'].substring(0, payload['Alias'].length() < 8 ? payload['Alias'].length() : 8));
 
  ]]></expression-component> 
-                <logger message="User to create: #[payload]" level="ERROR" doc:name="log User to create"/>
+                <logger message="User to create: #[payload]" level="INFO" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
 					<sfdc:upsert config-ref="Salesforce"  type="User" doc:name="upsert Users in Salesforce" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
