@@ -6,7 +6,7 @@
 
 package org.mule.templates.integration;
 
-import static junit.framework.Assert.assertEquals;
+
 
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,13 +30,14 @@ import com.mulesoft.module.batch.BatchTestHelper;
 
 /**
  * The objective of this class is to validate the correct behavior of the flows
- * for this Anypoint Tempalte that make calls to external systems.
+ * for this Anypoint Template that make calls to external systems.
  * 
  */
 public class BusinessLogicIT extends AbstractTemplateTestCase {
 
+	private static final Logger log = LogManager.getLogger(BusinessLogicIT.class);
 	private static final String TEMPLATE_PREFFIX = "wday2sfdc-worker-migration";
-	protected static final int TIMEOUT_SEC = 60;
+	protected static final int TIMEOUT_SEC = 300;
 	private static SubflowInterceptingChainLifecycleWrapper retrieveUserFlow;
 	private static final String PATH_TO_TEST_PROPERTIES = "./src/test/resources/mule.test.properties";
 	private BatchTestHelper helper;
@@ -59,7 +63,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
     	try {
     		props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
     	} catch (Exception e) {
-    	   logger.error("Error occured while reading mule.test.properties", e);
+    		log.error("Error occured while reading mule.test.properties", e);
     	} 
     	WORKDAY_ID = props.getProperty("wday.testuser.id");
     	
@@ -80,14 +84,14 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 		Map<String, Object> payload = invokeRetrieveFlow(retrieveUserFlow,
 				user);
 		
-		assertEquals("The user first name should have been sync", testEmployee.getGivenName(), payload.get("FirstName"));
-		assertEquals("The user last name should have been sync", testEmployee.getFamilyName(), payload.get("LastName"));
+		Assert.assertEquals("The user first name should have been sync", testEmployee.getGivenName(), payload.get("FirstName"));
+		Assert.assertEquals("The user last name should have been sync", testEmployee.getFamilyName(), payload.get("LastName"));
 	}
 
 	private void createTestDataInSandBox() throws MuleException, Exception {
 		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("updateWorkdayEmployee");
 		flow.initialise();
-		logger.info("updating a workday employee...");
+		log.info("updating a workday employee...");
 		try {
 			flow.process(getTestEvent(prepareEdit(), MessageExchangePattern.REQUEST_RESPONSE));						
 		} catch (Exception e) {
@@ -97,7 +101,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 
 	private Employee prepareEdit(){
 		String name = TEMPLATE_PREFFIX + System.currentTimeMillis();
-		logger.info("employee name: " + name);
+		log.info("employee name: " + name);
 		testEmployee = new Employee(name, TEMPLATE_PREFFIX + System.currentTimeMillis(), "bwillis@gmailtest.com", "650-232-2323", "999 Main St", "San Francisco", "CA", "94105", "US", "o7aHYfwG", 
 				"2014-04-17-07:00", "2014-04-21-07:00", "QA Engineer", "San_Francisco_site", "Regular", "Full Time", "Salary", "USD", "140000", "Annual", "39905", "21440", WORKDAY_ID);
 		return testEmployee;
