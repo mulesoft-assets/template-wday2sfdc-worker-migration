@@ -6,9 +6,8 @@
 
 package org.mule.templates;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
@@ -24,34 +23,29 @@ public class TransactionLogProcessor implements MessageProcessor{
 	public MuleEvent process(MuleEvent event) throws MuleException {
 		WorkerType worker = (WorkerType) event.getMessage().getPayload();
 		EventTargetTransactionLogEntryDataType log = worker.getWorkerData().getTransactionLogEntryData();
-		XMLGregorianCalendar lastModifiedDate = null;
-		if (log != null){
-			java.util.GregorianCalendar gc = new java.util.GregorianCalendar();
-			XMLGregorianCalendar now;
-			try {
-				now = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);									
-				for (TransactionLogEntryType entry : log.getTransactionLogEntry()){								
-					if (entry.getTransactionLogData().getTransactionEntryMoment() != null && entry.getTransactionLogData().getTransactionEntryMoment().compare(now) <= 0){
-						if (entry.getTransactionLogData().getTransactionEffectiveMoment() != null && entry.getTransactionLogData().getTransactionEffectiveMoment().compare(now) <= 0) {
-							if (lastModifiedDate != null && entry.getTransactionLogData().getTransactionEntryMoment().compare(lastModifiedDate) > 0){
-								lastModifiedDate = entry.getTransactionLogData().getTransactionEntryMoment();
-							}
-							else
-								lastModifiedDate = entry.getTransactionLogData().getTransactionEntryMoment();
-						}
-						else
-							if (entry.getTransactionLogData().getTransactionEffectiveMoment() == null){
-								if (lastModifiedDate == null || (lastModifiedDate != null && entry.getTransactionLogData().getTransactionEntryMoment().compare(lastModifiedDate) > 0))
-									lastModifiedDate = entry.getTransactionLogData().getTransactionEntryMoment();
-							}
-					}								
+		Calendar lastModifiedDate = null;
+		if (log != null) {
+			Calendar now = Calendar.getInstance();
+			for (TransactionLogEntryType entry : log.getTransactionLogEntry()) {
+				if (entry.getTransactionLogData().getTransactionEntryMoment() != null
+						&& entry.getTransactionLogData().getTransactionEntryMoment().compareTo(now) <= 0) {
+					if (entry.getTransactionLogData().getTransactionEffectiveMoment() != null
+							&& entry.getTransactionLogData().getTransactionEffectiveMoment().compareTo(now) <= 0) {
+						if (lastModifiedDate != null && entry.getTransactionLogData().getTransactionEntryMoment().compareTo(lastModifiedDate) > 0) {
+							lastModifiedDate = entry.getTransactionLogData().getTransactionEntryMoment();
+						} else
+							lastModifiedDate = entry.getTransactionLogData().getTransactionEntryMoment();
+					} else if (entry.getTransactionLogData().getTransactionEffectiveMoment() == null) {
+						if (lastModifiedDate == null
+								|| (lastModifiedDate != null && entry.getTransactionLogData().getTransactionEntryMoment().compareTo(lastModifiedDate) > 0))
+							lastModifiedDate = entry.getTransactionLogData().getTransactionEntryMoment();
+					}
 				}
-			} catch (DatatypeConfigurationException e1) {
-				e1.printStackTrace();
 			}
 		}
-				
-		event.getMessage().setPayload(lastModifiedDate == null ? null : lastModifiedDate.normalize().toString());
+
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		event.getMessage().setPayload(lastModifiedDate == null ? null : sdf.format(lastModifiedDate.getTime()));
 		return event;
 	}
 	

@@ -10,13 +10,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.workday.hr.EffectiveAndUpdatedDateTimeDataType;
 import com.workday.hr.GetWorkersRequestType;
@@ -33,9 +29,11 @@ public class WorkersRequest {
 		EffectiveAndUpdatedDateTimeDataType dateRangeData = new EffectiveAndUpdatedDateTimeDataType();
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.SECOND, -3);
-		dateRangeData.setUpdatedThrough(xmlDate(cal.getTime()));
+		dateRangeData.setUpdatedThrough(cal);
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-		dateRangeData.setUpdatedFrom(xmlDate(sdf.parse(startDate)));
+		Calendar startDateCal = Calendar.getInstance();
+		startDateCal.setTime(sdf.parse(startDate));
+		dateRangeData.setUpdatedFrom(startDateCal);
 		
 		WorkerRequestCriteriaType crit = new WorkerRequestCriteriaType();
 		List<TransactionLogCriteriaType> transactionLogCriteriaData = new ArrayList<TransactionLogCriteriaType>();
@@ -59,12 +57,5 @@ public class WorkersRequest {
 		getWorkersType.setResponseGroup(resGroup);
 		
 		return getWorkersType;
-	}
-	
-	private static XMLGregorianCalendar xmlDate(Date date) throws DatatypeConfigurationException {
-		GregorianCalendar gregorianCalendar = (GregorianCalendar) GregorianCalendar.getInstance();
-		gregorianCalendar.setTime(date);
-		return DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar);
-	}
-	
+	}	
 }
