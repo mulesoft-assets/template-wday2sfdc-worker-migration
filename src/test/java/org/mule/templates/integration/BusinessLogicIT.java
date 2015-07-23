@@ -102,7 +102,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 	private Employee prepareEdit(){
 		String name = TEMPLATE_PREFFIX + System.currentTimeMillis();
 		log.info("employee name: " + name);
-		testEmployee = new Employee(name, TEMPLATE_PREFFIX + System.currentTimeMillis(), "bwillis@gmailtest.com", "650-232-2323", "999 Main St", "San Francisco", "CA", "94105", "US", "o7aHYfwG", 
+		testEmployee = new Employee(name, TEMPLATE_PREFFIX + System.currentTimeMillis(), EMAIL, "650-232-2323", "999 Main St", "San Francisco", "CA", "94105", "US", "o7aHYfwG", 
 				"2014-04-17-07:00", "2014-04-21-07:00", "QA Engineer", "San_Francisco_site", "Regular", "Full Time", "Salary", "USD", "140000", "Annual", "39905", "21440", WORKDAY_ID);
 		return testEmployee;
 	}		

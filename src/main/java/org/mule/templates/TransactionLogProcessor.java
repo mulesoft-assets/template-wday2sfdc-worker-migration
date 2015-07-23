@@ -8,6 +8,7 @@ package org.mule.templates;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
@@ -44,7 +45,8 @@ public class TransactionLogProcessor implements MessageProcessor{
 			}
 		}
 
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		event.getMessage().setPayload(lastModifiedDate == null ? null : sdf.format(lastModifiedDate.getTime()));
 		return event;
 	}

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:wd-hr="http://www.mulesoft.org/schema/mule/wd-hr" 
-	xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" 
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:wd-hr="http://www.mulesoft.org/schema/mule/wd-hr" 
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 
 	xmlns="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
@@ -10,19 +9,44 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
-http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
-http://www.mulesoft.org/schema/mule/wd-hr http://www.mulesoft.org/schema/mule/wd-hr/current/mule-wd-hr.xsd">
-<!--     <wd-staffing:config name="Workday_Staffing" staffingUser="${wday.user}" staffingPassword="${wday.password}" staffingEndpoint="${wday.endpoint}" doc:name="Workday Staffing"> -->
-<!--         <wd-staffing:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/> -->
-<!--     </wd-staffing:config> -->
-    <data-mapper:config name="Pojo_To_ChangeLegalNameRequestType" transformationGraphPath="pojo_to_changelegalnamerequesttype.grf" doc:name="Pojo_To_ChangeLegalNameRequestType"/>
+http://www.mulesoft.org/schema/mule/wd-hr http://www.mulesoft.org/schema/mule/wd-hr/current/mule-wd-hr.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     
-    <sub-flow name="retrieveUserSFDC" doc:name="retrieveUserSFDC">
+    <sub-flow name="retrieveUserSFDC" >
         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName,LastName FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
     </sub-flow>
 
-    <sub-flow name="updateWorkdayEmployee" doc:name="updateWorkdayEmployee">
-        <data-mapper:transform config-ref="Pojo_To_ChangeLegalNameRequestType" doc:name="Pojo To ChangeLegalNameRequestType"/>
+    <sub-flow name="updateWorkdayEmployee" >
+        <dw:transform-message doc:name="Pojo To ChangeLegalNameRequestType">
+            <dw:set-payload><![CDATA[%dw 1.0
+%input payload application/java
+%output application/java
+---
+({
+	changeLegalNameData: {
+		workerReference: {
+			ID: [{
+					type: "Employee_ID",
+					value: payload.id
+			}]
+		},
+		nameData: {
+			firstName: payload.givenName,
+			lastName: payload.familyName,
+			countryReference: {
+				ID: [{
+					type: "ISO_3166-1_Alpha-3_Code",
+					value: "USA"
+				}]
+			}
+		}
+	},
+	businessProcessParameters: {
+		autoComplete: true
+	}
+} as :object { class: "com.workday.hr.ChangeLegalNameRequestType"})]]></dw:set-payload>
+        </dw:transform-message>
+
         <wd-hr:change-legal-name config-ref="Workday_Human_Resource" doc:name="Workday Human Resource"/>
     </sub-flow>
     
