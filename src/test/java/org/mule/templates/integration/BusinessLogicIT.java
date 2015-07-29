@@ -47,9 +47,9 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 
 	@BeforeClass
 	public static void init(){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 		Calendar cal = Calendar.getInstance();
-		System.setProperty("migration.startDate", "\"" + sdf.format(cal.getTime()) + "\"");	
+		System.setProperty("migration.startDate", sdf.format(cal.getTime()));
 	}
 	
 	@Before

@@ -25,7 +25,44 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
     <batch:job name="migrateUsersBatch" max-failed-records="-1">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
-            <wd-hr:get-workers config-ref="Workday_Human_Resource" doc:name="Get Workers from Workday" workersRequest-ref="#[org.mule.templates.WorkersRequest.create(${migration.startDate})]"/>
+            <dw:transform-message doc:name="Create GetWorkersRequestType">
+                <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	requestCriteria: {
+		excludeInactiveWorkers: true,
+		transactionLogCriteriaData: [{
+			transactionDateRangeData: {
+				updatedFrom: p('migration.startDate') as :datetime,
+				updatedThrough: (now - |PT3S|) as :datetime
+			} as :object {
+				class : "com.workday.hr.EffectiveAndUpdatedDateTimeDataType"
+			}
+		} as :object {
+			class : "com.workday.hr.TransactionLogCriteriaType"
+		}]
+	} as :object {
+		class : "com.workday.hr.WorkerRequestCriteriaType"
+	},
+	responseGroup: {
+		includeEmploymentInformation: true,
+		includeManagementChainData: true,
+		includeOrganizations: true,
+		includePersonalInformation: true,
+		includeReference: true,
+		includeRoles: true,
+		includeTransactionLogData: true,
+		includeUserAccount: true
+	} as :object {
+		class : "com.workday.hr.WorkerResponseGroupType"
+	}
+} as :object {
+	class : "com.workday.hr.GetWorkersRequestType"
+}]]></dw:set-payload>
+            </dw:transform-message>
+
+            <wd-hr:get-workers config-ref="Workday_Human_Resource" doc:name="Get Workers from Workday" />
             <set-payload value="#[payload.responseData.worker]" doc:name="Extract a list of Workers"/>
             <custom-filter doc:name="Filter duplicate workers" class="org.mule.templates.WorkersDeduplicationFilter"/>
         </batch:input> 
