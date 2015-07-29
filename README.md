@@ -39,6 +39,7 @@ Finally, during the On Complete stage the Anypoint Template will both output sta
 # Considerations <a name="considerations"/>
 
 There are a couple of things you should take into account before running this Anypoint Template:
+
 1. **Users cannot be deleted in SalesForce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
 2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. In this Anypoint Template you will find a processor labeled *setup Worker for upsert* where to set your Profile Ids from the source account. Note that for the integration test to run properly, you should change the constant *sfdc.profileId* in *mule.test.properties* to one that's valid in your source organization.
 3. **Working with sandboxes for the same account**: Although each sandbox should be a completely different environment, Usernames cannot be repeated in different sandboxes, i.e. if you have a user with username *bob.dylan* in *sandbox A*, you will not be able to create another user with username *bob.dylan* in *sandbox B*. If you are indeed working with Sandboxes for the same SalesForce account you will need to map the source username to a different one in the target sandbox, for this purpose, please refer to the processor labeled *setup Worker for upsert*.
@@ -91,7 +92,7 @@ In any of the ways you would like to run this Anypoint Template this is an examp
 <h1>Batch Process initiated</h1>
 <b>ID:</b>6eea3cc6-7c96-11e3-9a65-55f9f3ae584e<br/>
 <b>Records to Be Processed: </b>9<br/>
-<b>Start execution on: </b>Mon Jan 13 18:05:33 GMT-03:00 2014
+<b>Start execution on: </b>Mon Jul 20 18:05:33 GMT-03:00 2015
 </pre>
 
 ## Running on premise <a name="runonopremise"/>
@@ -127,7 +128,7 @@ Once you have imported you Anypoint Template into Anypoint Studio you need to fo
 
 
 ### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
-Complete all properties in one of the property files, for example in [mule.prod.properties] (../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
+Complete all properties in one of the property files, for example in [mule.prod.properties](../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
 After this, to trigger the use case you just need to hit the local http connector with the port you configured in the properties file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/migrateworkers` and this will output a summary report and send it in the mail.
 
 ## Running on CloudHub <a name="runoncloudhub"/>
@@ -142,12 +143,12 @@ Mule Studio provides you with really easy way to deploy your Template directly t
 In order to use this Mule Anypoint Template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 ### Application configuration
 + http.port `9090`
-+ migration.startDate `"2014-09-12T00:00:00.000+0200"`
++ migration.startDate `2014-09-12T00:00:00.000+02:00`
 
 #### Workday Connector configuration
 + wday.user `admin@workday`
 + wday.password `secret`
-+ wday.endpoint `https://impl-cc.workday.com/ccx/service/workday/Human_Resources/v21.1`
++ wday.endpoint `https://impl-cc.workday.com/ccx/service/workday/Human_Resources/v23.1`
 
 #### Salesforce Connector
 + sfdc.username `user@company.com`
@@ -166,6 +167,11 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 + smtp.port `587`
 + smtp.user `sender%40gmail.com`
 + smtp.password `secret`
+
+#### Mail details
++ mail.from `email%40from.com`
++ mail.to `email@to.com`
++ mail.subject `Users Migration Report`
 
 # API Calls <a name="apicalls"/>
 Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The Anypoint Template calls to the API can be calculated using the formula:
@@ -211,6 +217,7 @@ This Anypoint Template has only an [HTTP Connector](http://www.mulesoft.org/docu
 
 ###  Inbound Flow
 **HTTP Connector** - start Workers synchronization
+
 + `${http.port}` is set as a property to be defined either in a property file or in CloudHub environment variables.
 + The path configured by default is `migrateworkers` and you are free to change for the one you prefer.
 + The host name for all endpoints in your CloudHub configuration should be defined as `localhost`. CloudHub will then route requests from your application domain URL to the endpoint.

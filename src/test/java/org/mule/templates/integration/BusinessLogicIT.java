@@ -47,9 +47,9 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 
 	@BeforeClass
 	public static void init(){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 		Calendar cal = Calendar.getInstance();
-		System.setProperty("migration.startDate", "\"" + sdf.format(cal.getTime()) + "\"");	
+		System.setProperty("migration.startDate", sdf.format(cal.getTime()));
 	}
 	
 	@Before
@@ -102,7 +102,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 	private Employee prepareEdit(){
 		String name = TEMPLATE_PREFFIX + System.currentTimeMillis();
 		log.info("employee name: " + name);
-		testEmployee = new Employee(name, TEMPLATE_PREFFIX + System.currentTimeMillis(), "bwillis@gmailtest.com", "650-232-2323", "999 Main St", "San Francisco", "CA", "94105", "US", "o7aHYfwG", 
+		testEmployee = new Employee(name, TEMPLATE_PREFFIX + System.currentTimeMillis(), EMAIL, "650-232-2323", "999 Main St", "San Francisco", "CA", "94105", "US", "o7aHYfwG", 
 				"2014-04-17-07:00", "2014-04-21-07:00", "QA Engineer", "San_Francisco_site", "Regular", "Full Time", "Salary", "USD", "140000", "Annual", "39905", "21440", WORKDAY_ID);
 		return testEmployee;
 	}		

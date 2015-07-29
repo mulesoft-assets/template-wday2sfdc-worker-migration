@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" 
-	xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" 
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
 	xmlns:wd-hr="http://www.mulesoft.org/schema/mule/wd-hr" 
 	xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" 
 	xmlns:json="http://www.mulesoft.org/schema/mule/json" 
@@ -11,7 +10,7 @@
 	xmlns="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
 	xmlns:spring="http://www.springframework.org/schema/beans" 
-	version="EE-3.6.2" 
+	version="EE-3.7.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
@@ -21,14 +20,49 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
 http://www.mulesoft.org/schema/mule/wd-hr http://www.mulesoft.org/schema/mule/wd-hr/current/mule-wd-hr.xsd
-http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
-http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
-    <data-mapper:config name="WorkerType_To_Map" transformationGraphPath="workertype_to_map.grf" doc:name="WorkerType_To_Map"/>
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
 
     <batch:job name="migrateUsersBatch" max-failed-records="-1">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
-            <wd-hr:get-workers config-ref="Workday_Human_Resource" doc:name="Get Workers from Workday" workersRequest-ref="#[org.mule.templates.WorkersRequest.create(${migration.startDate})]"/>
+            <dw:transform-message doc:name="Create GetWorkersRequestType">
+                <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	requestCriteria: {
+		excludeInactiveWorkers: true,
+		transactionLogCriteriaData: [{
+			transactionDateRangeData: {
+				updatedFrom: p('migration.startDate') as :datetime,
+				updatedThrough: (now - |PT3S|) as :datetime
+			} as :object {
+				class : "com.workday.hr.EffectiveAndUpdatedDateTimeDataType"
+			}
+		} as :object {
+			class : "com.workday.hr.TransactionLogCriteriaType"
+		}]
+	} as :object {
+		class : "com.workday.hr.WorkerRequestCriteriaType"
+	},
+	responseGroup: {
+		includeEmploymentInformation: true,
+		includeManagementChainData: true,
+		includeOrganizations: true,
+		includePersonalInformation: true,
+		includeReference: true,
+		includeRoles: true,
+		includeTransactionLogData: true,
+		includeUserAccount: true
+	} as :object {
+		class : "com.workday.hr.WorkerResponseGroupType"
+	}
+} as :object {
+	class : "com.workday.hr.GetWorkersRequestType"
+}]]></dw:set-payload>
+            </dw:transform-message>
+
+            <wd-hr:get-workers config-ref="Workday_Human_Resource" doc:name="Get Workers from Workday" />
             <set-payload value="#[payload.responseData.worker]" doc:name="Extract a list of Workers"/>
             <custom-filter doc:name="Filter duplicate workers" class="org.mule.templates.WorkersDeduplicationFilter"/>
         </batch:input> 
@@ -39,8 +73,26 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
                 </enricher>
             </batch:step>
             <batch:step name="Map_Workday_Worker_to_SFDC_Map">
-                <data-mapper:transform config-ref="WorkerType_To_Map" doc:name="WorkerType To Map"/>
-                <expression-component doc:name="Set Last Modified Date"><![CDATA[payload.LastModifiedDate = recordVars['lastModifiedDate']]]></expression-component>
+                <dw:transform-message doc:name="WorkerType To Map">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%input payload application/java
+%output application/java
+---
+{
+	FirstName: payload.workerData.personalData.nameData.legalNameData.nameDetailData.firstName,
+	LastName: payload.workerData.personalData.nameData.legalNameData.nameDetailData.lastName,
+	Email: payload.workerData.personalData.contactData.emailAddressData[0].emailAddress when (payload.workerData.personalData.contactData.emailAddressData != null) otherwise null,
+	UserName: payload.workerData.userAccountData.userName when (payload.workerData.userAccountData != null) otherwise null,
+	TimeZoneSidKey: "America/New_York",
+	LanguageLocaleKey: payload.workerData.userAccountData.defaultDisplayLanguageReference.ID[1].value when (payload.workerData.userAccountData != null and payload.workerData.userAccountData.defaultDisplayLanguageReference != null) otherwise null,
+	LocaleSidKey: payload.workerData.userAccountData.localeReference.ID[1].value when (payload.workerData.userAccountData != null and payload.workerData.userAccountData.localeReference != null) otherwise null,
+	Alias: payload.workerData.userAccountData.userName when (payload.workerData.userAccountData != null) otherwise null
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <enricher source="#[payload]" target="#[payload.LastModifiedDate]" doc:name="set LastModifiedDate">
+                    <set-payload value="#[recordVars['lastModifiedDate'] == null ? null : recordVars['lastModifiedDate']]" doc:name="get LastMoifiedDate"/>
+                </enricher>
+
             </batch:step>
             <batch:step name="getUserInSalesforceStep">
                 <enricher source="#[payload]" target="#[recordVars['userInSalesforce']]" doc:name="store result in record var 'userInSalesforce'">
@@ -48,41 +100,41 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
                 </enricher>
  
             </batch:step>
-            <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInSalesforce'] is NullPayload]">
-
-                <choice doc:name="Choice">
-                    <when expression="#[org.mule.templates.UserDateComparator.isAfter(payload, recordVars['userInSalesforce'])]">
-                        <expression-component doc:name="define Id in SalesForce instance"><![CDATA[// Put ID from the object in B so that SalesForce updates this object
- payload.put('Id', recordVars['userInSalesforce']['Id']);]]></expression-component> 
-                    </when>
-                    <otherwise>
-                        <set-payload doc:name="set to null to skip this user" value="#[return null]"/>
-                    </otherwise>
-                </choice>
+            <batch:step name="selectNewerUserStep">
+                <enricher source="#[payload]" target="#[payload.Id]" doc:name="set ID from the SalesForce object">
+                    <set-payload value="#[recordVars['userInSalesforce'] != null &amp;&amp; org.mule.templates.UserDateComparator.isAfter(payload, recordVars['userInSalesforce']) ? recordVars['userInSalesforce']['Id'] : null]" doc:name="define Id in SalesForce instance"/>
+                </enricher>
             </batch:step>
-            <batch:step name="createUsersInSalesforceStep" filter-expression="#[payload is NullPayload]">
-                <expression-component doc:name="setup Worker for upsert"><![CDATA[payload.put('Id', recordVars['userInSalesforce'] is NullPayload ? null : recordVars['userInSalesforce']['Id']);
+            <batch:step name="createUsersInSalesforceStep">
+                <dw:transform-message doc:name="setup Worker for upsert">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%input payloaod application/java
+%output application/java
+---
+{
+	// TODO - Each Username should be UNIQUE even between different sandboxes of a single instance 
+ 	// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up 
+	Username: (payload.UserName ++ ".target") when (payload.UserName != null) otherwise null,
+	LastName: payload.LastName,
+	FirstName: payload.FirstName,
+	Id: payload.Id,
+	Email: payload.Email,
+	Alias: payload.Alias,
 
- // We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance) 
- // TODO - You should change these IDs to the ones corresponding to your SalesForce instances profile IDs 
- payload.put('ProfileId', '${sfdc.profileId}'); 
-
- // TODO - Each Username should be UNIQUE even between different sandboxes of a single instance 
- // If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up 
- payload.put('Username',  payload['Username'] + '.target'); 
-
- // We remove these fields as they are internally managed by SalesForce and it is not valid to create/update an object with them 
- payload.remove('type'); 
- payload.remove('LastModifiedDate');
-
- payload.put('LocaleSidKey', payload['LocaleSidKey'] == null ? '${sfdc.localeSidKey}' : payload['LocaleSidKey']);
- payload.put('LanguageLocaleKey', payload['LanguageLocaleKey'] == null ? '${sfdc.languageLocaleKey}' : payload['LanguageLocaleKey']);
- payload.put('TimeZoneSidKey', payload['TimeZoneSidKey'] == null ? '${sfdc.timeZoneSidKey}' : payload['TimeZoneSidKey']);
- payload.put('EmailEncodingKey', payload['EmailEncodingKey'] == null ? '${sfdc.emailEncodingKey}' : payload['EmailEncodingKey']);
-
- payload.put('Alias', payload['Alias'] == null ? (payload['FirstName'].substring(0, 1) + payload['LastName'].substring(0, payload['LastName'].length() < 7 ? payload['LastName'].length() : 7) ) : payload['Alias'].substring(0, payload['Alias'].length() < 8 ? payload['Alias'].length() : 8));
-
- ]]></expression-component> 
+	TimeZoneSidKey: payload.TimeZoneSidKey when payload.TimeZoneSidKey != null otherwise p('sfdc.timeZoneSidKey'),
+	LocaleSidKey: payload.LocaleSidKey when payload.LocaleSidKey != null otherwise p('sfdc.localeSidKey'),
+	EmailEncodingKey: payload.EmailEncodingKey when payload.EmailEncodingKey != null otherwise p('sfdc.emailEncodingKey'),
+	
+	// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance) 
+ 	// TODO - You should change these IDs to the ones corresponding to your SalesForce instances profile IDs 
+	ProfileId: p('sfdc.profileId'),
+	LanguageLocaleKey: payload.LanguageLocaleKey when payload.LanguageLocaleKey != null otherwise p('sfdc.languageLocaleKey')
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <enricher source="#[payload]" target="#[payload.Alias]" doc:name="Set Alias">
+                    <set-payload value="#[payload['Alias'] == null ? (payload['FirstName'].substring(0, 1) + payload['LastName'].substring(0, payload['LastName'].length() &lt; 7 ? payload['LastName'].length() : 7) ) : payload['Alias'].substring(0, payload['Alias'].length() &lt; 8 ? payload['Alias'].length() : 8)]" doc:name="Set Alias"/>
+                </enricher>
+ 
                 <logger message="User to create: #[payload]" level="INFO" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
 					<sfdc:upsert config-ref="Salesforce"  type="User" doc:name="upsert Users in Salesforce" externalIdFieldName="Id">
