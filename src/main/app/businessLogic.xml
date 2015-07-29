@@ -100,12 +100,12 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
                 </enricher>
  
             </batch:step>
-            <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInSalesforce'] is NullPayload]" >
+            <batch:step name="selectNewerUserStep">
                 <enricher source="#[payload]" target="#[payload.Id]" doc:name="set ID from the SalesForce object">
                     <set-payload value="#[recordVars['userInSalesforce'] != null &amp;&amp; org.mule.templates.UserDateComparator.isAfter(payload, recordVars['userInSalesforce']) ? recordVars['userInSalesforce']['Id'] : null]" doc:name="define Id in SalesForce instance"/>
                 </enricher>
             </batch:step>
-            <batch:step name="createUsersInSalesforceStep" filter-expression="#[payload is NullPayload]">
+            <batch:step name="createUsersInSalesforceStep">
                 <dw:transform-message doc:name="setup Worker for upsert">
                     <dw:set-payload><![CDATA[%dw 1.0
 %input payloaod application/java
