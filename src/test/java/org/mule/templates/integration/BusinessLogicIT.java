@@ -9,14 +9,15 @@ package org.mule.templates.integration;
 
 
 import java.io.FileInputStream;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,9 +48,8 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 
 	@BeforeClass
 	public static void init(){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-		Calendar cal = Calendar.getInstance();
-		System.setProperty("migration.startDate", sdf.format(cal.getTime()));
+		DateTimeFormatter df = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");	
+		System.setProperty("migration.startDate", df.print(new Date().getTime()));
 	}
 	
 	@Before
