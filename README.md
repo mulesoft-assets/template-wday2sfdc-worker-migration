@@ -128,7 +128,7 @@ Once you have imported you Anypoint Template into Anypoint Studio you need to fo
 
 
 ### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
-Complete all properties in one of the property files, for example in [mule.prod.properties](../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
+Complete all properties in one of the property files, for example in [mule.prod.properties] (../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
 After this, to trigger the use case you just need to hit the local http connector with the port you configured in the properties file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/migrateworkers` and this will output a summary report and send it in the mail.
 
 ## Running on CloudHub <a name="runoncloudhub"/>
@@ -143,12 +143,13 @@ Mule Studio provides you with really easy way to deploy your Template directly t
 In order to use this Mule Anypoint Template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 ### Application configuration
 + http.port `9090`
-+ migration.startDate `2014-09-12T00:00:00.000+02:00`
++ migration.startDate `2016-01-28T00:00:00.000+02:00`
 
 #### Workday Connector configuration
-+ wday.user `admin@workday`
++ wday.user `admin`
 + wday.password `secret`
-+ wday.endpoint `https://impl-cc.workday.com/ccx/service/workday/Human_Resources/v23.1`
++ wday.tenant `example_pt1`
++ wday.hostname `impl-cc.workday.com`
 
 #### Salesforce Connector
 + sfdc.username `user@company.com`
