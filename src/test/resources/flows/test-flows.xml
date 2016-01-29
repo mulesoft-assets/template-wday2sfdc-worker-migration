@@ -1,52 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:wd-hr="http://www.mulesoft.org/schema/mule/wd-hr" 
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" 
+	xmlns:wd-connector="http://www.mulesoft.org/schema/mule/wd-connector" 
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 
 	xmlns="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.7.1"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
-http://www.mulesoft.org/schema/mule/wd-hr http://www.mulesoft.org/schema/mule/wd-hr/current/mule-wd-hr.xsd
-http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/wd-connector http://www.mulesoft.org/schema/mule/wd-connector/current/mule-wd-connector.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
     
     <sub-flow name="retrieveUserSFDC" >
-        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName,LastName FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
+        <logger message="Retrieving user from Salesforce.. #[payload]" level="INFO" doc:name="Log before retrieving user"/>
+        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName,LastName FROM User WHERE Email = '#[payload['email']]'" doc:name="Retrieve User"/>
+        <logger message="Retrieved user: #[payload]" level="INFO" doc:name="Logger"/>
     </sub-flow>
 
-    <sub-flow name="updateWorkdayEmployee" >
-        <dw:transform-message doc:name="Pojo To ChangeLegalNameRequestType">
+    <flow name="updateWorkdayEmployee" processingStrategy="synchronous">
+        <logger message="Changing Worker Name: #[payload]" level="INFO" doc:name="Log before changing name"/>
+        <dw:transform-message doc:name="Create ChangeLegalName Request">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/xml
+%namespace ns0 urn:com.workday/bsvc
+---
+{
+
+	ns0#Change_Legal_Name_Request: {
+		ns0#Business_Process_Parameters: {
+			ns0#Auto_Complete: true,
+			ns0#Run_Now: true
+		},
+		ns0#Change_Legal_Name_Data: {
+			ns0#Worker_Reference: {
+				ns0#ID @(ns0#type: 'Employee_ID'): p('wday.testuser.id')
+			},
+			ns0#Name_Data: {
+				ns0#Country_Reference: {
+					ns0#ID @(ns0#type: 'ISO_3166-1_Alpha-3_Code'): 'USA'
+				},
+				ns0#First_Name: payload.givenName,
+				ns0#Last_Name: payload.familyName
+			}
+		}
+	}
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <wd-connector:invoke config-ref="Workday__Basic" type="Human_Resources||Change_Legal_Name" doc:name="Workday"/>
+        <dw:transform-message doc:name="Transform Message">
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
 ---
-({
-	changeLegalNameData: {
-		workerReference: {
-			ID: [{
-					type: "Employee_ID",
-					value: payload.id
-			}]
-		},
-		nameData: {
-			firstName: payload.givenName,
-			lastName: payload.familyName,
-			countryReference: {
-				ID: [{
-					type: "ISO_3166-1_Alpha-3_Code",
-					value: "USA"
-				}]
-			}
-		}
-	},
-	businessProcessParameters: {
-		autoComplete: true
-	}
-} as :object { class: "com.workday.hr.ChangeLegalNameRequestType"})]]></dw:set-payload>
+payload]]></dw:set-payload>
         </dw:transform-message>
 
-        <wd-hr:change-legal-name config-ref="Workday_Human_Resource" doc:name="Workday Human Resource"/>
-    </sub-flow>
+
+        <logger message="Legal name changed...#[payload]" level="INFO" doc:name="Log name change flow completed"/>
+
+    </flow>
     
 </mule>
