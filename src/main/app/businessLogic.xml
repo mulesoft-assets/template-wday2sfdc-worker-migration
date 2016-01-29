@@ -33,8 +33,15 @@ http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/
 %namespace ns0 urn:com.workday/bsvc
 ---
 {
+
 	ns0#Get_Workers_Request: {
 		ns0#Request_Criteria: {
+			ns0#Transaction_Log_Criteria_Data: {
+				ns0#Transaction_Date_Range_Data: {
+					ns0#Updated_From: p('migration.startDate'),
+					ns0#Updated_Through: (now - |PT6S|)
+				}
+			},
 			ns0#Exclude_Inactive_Workers: true,
 			ns0#Exclude_Employees: false,
 			ns0#Exclude_Contingent_Workers: false
@@ -54,11 +61,8 @@ http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/
 %namespace ns0 urn:com.workday/bsvc
 ---
 payload.ns0#Get_Workers_Response.ns0#Response_Data.*ns0#Worker
-filter (
-$.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != null 
-and 
-$.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != ''
-)
+filter ($.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != null 
+and $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != '')
 distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address
 ]]></dw:set-payload>
             </dw:transform-message>
@@ -75,20 +79,19 @@ payload.ns0#Get_Workers_Response.ns0#Response_Data
 <!--             <custom-filter doc:name="Filter duplicate workers" class="org.mule.templates.WorkersDeduplicationFilter"/> -->
         </batch:input> 
         <batch:process-records>
-            <batch:step name="createUsersInSalesforceStep" >
-                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
-                <dw:transform-message doc:name="setup Worker for upsert" metadata:id="e7f6970a-c5a7-4c07-81d3-5de2ba3ca0c0">
+            <batch:step name="checkExistingUser">
+                <dw:transform-message metadata:id="e7f6970a-c5a7-4c07-81d3-5de2ba3ca0c0" doc:name="setup User object">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
 ---
 {
 	// Each Username should be UNIQUE even between different sandboxes of a single instance 
  	// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up 
-	Username          : (payload.Worker_Data.User_Account_Data.User_Name) when (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.User_Name != null) otherwise payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data[-1].Email_Address ++ ".target",
+	Username          : (payload.Worker_Data.User_Account_Data.User_Name) when (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.User_Name != null) otherwise payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ++ ".target",
 	LastName          : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.Last_Name default "",
 	FirstName         : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.First_Name default "",
-	Email             : payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data[-1].emailAddress when (payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data != null) otherwise null,
-	//Alias             : payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.First_Name[0..2] ++ payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.Last_Name[0..3],
+	Email             : payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address when (payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data != null) otherwise null,
+	Alias             : payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.First_Name[0..2] ++ payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.Last_Name[0..3],
 
 	TimeZoneSidKey    : p('sfdc.timeZoneSidKey'),
 	LocaleSidKey      : payload.Worker_Data.User_Account_Data.Locale_Reference.ID[-1].value when (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Locale_Reference != null) otherwise p('sfdc.localeSidKey'),
@@ -100,15 +103,39 @@ payload.ns0#Get_Workers_Response.ns0#Response_Data
 	LanguageLocaleKey : payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference.ID[-1] when (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference != null) otherwise p('sfdc.languageLocaleKey')
 }]]></dw:set-payload>
                 </dw:transform-message>
-                <enricher source="#[payload == null ? null : payload.Id]" target="#[payload.Id]" doc:name="enrich payload with existing user Id">
+
+                <enricher source="#[payload == null ? null : payload.Id]" target="#[payload.Id]" doc:name="Enrich existing Id">
                     <sfdc:query-single config-ref="Salesforce" query="SELECT Id FROM User WHERE Email = '#[payload.Email]'" doc:name="query user in Salesforce instance"/>
                 </enricher>
+            </batch:step>
+            <batch:step name="createUsersInSalesforceStep" >
+
  
                 <logger message="User to create: #[payload]" level="INFO" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
+                    <dw:transform-message doc:name="Prepare for upsert">
+                        <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload map 
+{
+	(Id               : $.Id) when $.Id != null,
+	Username          : $.Username,
+	LastName          : $.LastName,
+	FirstName         : $.FirstName,
+	Email             : $.Email,
+	Alias             : $.Alias,
+	TimeZoneSidKey    : $.TimeZoneSidKey,
+	LocaleSidKey      : $.LocaleSidKey,
+	EmailEncodingKey  : $.EmailEncodingKey,
+	ProfileId         : $.ProfileId,
+	LanguageLocaleKey : $.LanguageLocaleKey
+}]]></dw:set-payload>
+                    </dw:transform-message>
 					<sfdc:upsert config-ref="Salesforce"  type="User" doc:name="upsert Users in Salesforce" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
 					</sfdc:upsert>
+
                 </batch:commit>
             </batch:step>
         </batch:process-records>
@@ -130,35 +157,7 @@ payload.ns0#Get_Workers_Response.ns0#Response_Data
 This flow should control the direction of the application, and it should be called by the different endpoints that your Kick exposes to trigger it.
 
 ">
-        <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/xml
-%namespace ns0 urn:com.workday/bsvc
----
-{
 
-	ns0#Change_Legal_Name_Request: {
-		ns0#Business_Process_Parameters: {
-			ns0#Auto_Complete: true,
-			ns0#Run_Now: true
-		},
-		ns0#Change_Legal_Name_Data: {
-			ns0#Worker_Reference: {
-				ns0#ID @(ns0#type: 'Employee_ID'): '24654'
-			},
-			ns0#Name_Data: {
-				ns0#Country_Reference: {
-					ns0#ID @(ns0#type: 'ISO_3166-1_Alpha-3_Code'): 'USA'
-				},
-				ns0#First_Name: 'Pista',
-				ns0#Last_Name: 'Lakatos'
-			}
-		}
-	}
-}]]></dw:set-payload>
-        </dw:transform-message>
-        <object-to-string-transformer doc:name="Object to String"/>
-        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
 
         <batch:execute name="migrateUsersBatch" doc:name="trigger migrateUsersBatch"/>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
