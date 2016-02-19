@@ -66,17 +66,6 @@ and $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.
 distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address
 ]]></dw:set-payload>
             </dw:transform-message>
-<!--             <dw:transform-message doc:name="Extract list of unique Workers"> 
-                <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
-%namespace ns0 urn:com.workday/bsvc
-- - -
-payload.ns0#Get_Workers_Response.ns0#Response_Data
-]]></dw:set-payload>
-            </dw:transform-message>
--->
-<!--             <set-payload value="#[payload.responseData.worker]" doc:name="Extract a list of Workers"/> -->
-<!--             <custom-filter doc:name="Filter duplicate workers" class="org.mule.templates.WorkersDeduplicationFilter"/> -->
         </batch:input> 
         <batch:process-records>
             <batch:step name="checkExistingUser">
