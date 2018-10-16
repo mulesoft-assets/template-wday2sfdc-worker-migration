@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version='1.0' encoding='utf-8'?>
 <configuration>
 	<placeholders>
 		<placeholder id="template_name">Workday to Salesforce Worker Migration</placeholder>
@@ -7,48 +7,48 @@
 		<section id="use_case">
 As a Workday admin I want to migrate workers to Salesfoce.
 
-This Anypoint Template should serve as a foundation for the process of migrating Worker from a Workday instance to Salesforce, being able to specify filtering criteria and desired behavior if a user already exists in the destination system. 
+This Anypoint template serves as a foundation for the process of migrating Worker from a Workday instance to Salesforce, being able to specify filtering criteria and desired behavior if a user already exists in the destination system. 
 
-As implemented, this Anypoint Template leverages the [Batch Module](http://www.mulesoft.org/documentation/display/current/Batch+Processing).
-Firstly the Anypoint Template will query the Workday for all the existing active workers that match the filtering criteria. The criteria is based on manipulations starting from the given date.
-The last step of the Process stage will group the workers and create them in Salesforce.
-Finally, during the On Complete stage the Anypoint Template will both output statistics data into the console and send a notification email with the results of the batch excecution. 
+As implemented, this template leverages the Mule batch module.
+Firstly the template queries the Workday for all the existing active workers that match the filtering criteria. The criteria is based on manipulations starting from the given date.
+The last step of the Process stage groups the workers and create them in Salesforce.
+Finally, during the On Complete stage the template will both output statistics data into the console and send a notification email with the results of the batch excecution. 
 		</section>
 		<section id="considerations">
-<![CDATA[
-There are a couple of things you should take into account before running this Anypoint Template:
+
+There are a couple of things you should take into account before running this template:
 
 1. **Users cannot be deleted in SalesForce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
-2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. In this Anypoint Template you will find a processor labeled *Prepare Salesforce User* where to set your Profile Ids from the source account. Note that for the integration test to run properly, you should change the constant *sfdc.profileId* in *mule.test.properties* to one that's valid in your source organization.
+2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. In this template you will find a processor labeled *Prepare Salesforce User* where to set your Profile Ids from the source account. Note that for the integration test to run properly, you should change the constant *sfdc.profileId* in *mule.test.properties* to one that's valid in your source organization.
 3. **Working with sandboxes for the same account**: Although each sandbox should be a completely different environment, Usernames cannot be repeated in different sandboxes, i.e. if you have a user with username *bob.dylan* in *sandbox A*, you will not be able to create another user with username *bob.dylan* in *sandbox B*. If you are indeed working with Sandboxes for the same SalesForce account you will need to map the source username to a different one in the target sandbox, for this purpose, please refer to the processor labeled *Prepare Salesforce User*.
 4. **Workday email uniqueness**: The email can be repeated for two or more accounts (or missing). Therefore Workday accounts with duplicate emails will be removed from processing.
-]]>
+
 		</section>
 		<section id="run_it">
-<![CDATA[
 
-In any of the ways you would like to run this Anypoint Template this is an example of the output you'll see after hitting the HTTP connector:
 
-<pre>
-<h1>Batch Process initiated</h1>
-<b>ID:</b>6eea3cc6-7c96-11e3-9a65-55f9f3ae584e<br/>
-<b>Records to Be Processed: </b>9<br/>
-<b>Start execution on: </b>Mon Jul 20 18:05:33 GMT-03:00 2015
-</pre>
-]]>
+In any of the ways you would like to run this template this is an example of the output you'll see after browse toting the HTTP connector:
+
+&lt;pre&gt;
+&lt;h1&gt;Batch Process initiated&lt;/h1&gt;
+&lt;b&gt;ID:&lt;/b&gt;6eea3cc6-7c96-11e3-9a65-55f9f3ae584e&lt;br/&gt;
+&lt;b&gt;Records to Be Processed: &lt;/b&gt;9&lt;br/&gt;
+&lt;b&gt;Start execution on: &lt;/b&gt;Mon Jul 20 18:05:33 GMT-03:00 2015
+&lt;/pre&gt;
+
 		</section>
 		<section id="running_on_cloudhub">
-<![CDATA[
-Once your app is all set up and started, supposing you choose `wdayworkermigration` as domain name to trigger the use case, you just need to hit `http://wdayworkermigration.cloudhub.io/migrate` and report will be sent to the email configured.
-]]>
+
+Once your app is all set up and started, supposing you choose `wdayworkermigration` as domain name to trigger the use case, you just need to browse to `http://wdayworkermigration.cloudhub.io/migrate` and report will be sent to the email configured.
+
 		</section>
 		<section id="running_on_standalone">
-<![CDATA[
-After this, to trigger the use case you just need to hit the local http connector with the port you configured in the properties file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/migrate` and this will output a summary report and send it in the mail.
-]]>
+
+After this, to trigger the use case you just need to browse to the local http connector with the port you configured in the properties file. If this is, for instance, `9090` then you should browse to: `http://localhost:9090/migrate` and this will output a summary report and send it in the mail.
+
 		</section>
 		<section id="application_configuration">
-		<![CDATA[
+		
 + http.port `9090`
 + migration.startDate `2016-01-28T00:00:00.000+02:00`
 
@@ -81,11 +81,11 @@ After this, to trigger the use case you just need to hit the local http connecto
 + mail.to `email@to.com`
 + mail.subject `Users Migration Report`
 
-]]>
+
 		</section>
 		<section id="api_calls">
-		<![CDATA[
-Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The Anypoint Template calls to the API can be calculated using the formula:
+		
+Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The template calls to the API can be calculated using the formula:
 
 *** X + X / 200***
 
@@ -94,12 +94,12 @@ Being ***X*** the number of Users to be synchronized on each run.
 The division by ***200*** is because, by default, Users are gathered in groups of 200 for each Upsert API Call in the commit step. Also consider that this calls are executed repeatedly every polling cycle.	
 
 For instance if 10 records are fetched from origin instance, then 11 api calls will be made (10 + 1).
-]]>
+
 		</section>
 		<section id="default_endpoints_xml">
-		<![CDATA[
-This is the file where you will found the inbound and outbound sides of your integration app.
-This Anypoint Template has only an [HTTP Connector](http://www.mulesoft.org/documentation/display/current/HTTP+Connector) as the way to trigger the use case.
+		
+This file provides the inbound and outbound sides of your integration app.
+This template has only an [HTTP Connector](http://www.mulesoft.org/documentation/display/current/HTTP+Connector) as the way to trigger the use case.
 
 $H$H#  Trigger Flow
 **HTTP Connector** - start Workers synchronization
@@ -107,13 +107,13 @@ $H$H#  Trigger Flow
 + `${http.port}` is set as a property to be defined either in a property file or in CloudHub environment variables.
 + The path configured by default is `migrate` and you are free to change for the one you prefer.
 + The host name for all endpoints in your CloudHub configuration should be defined as `localhost`. CloudHub will then route requests from your application domain URL to the endpoint.
-]]>
+
 		</section>
 		<section id="default_business_logic_xml">
-		<![CDATA[
-Functional aspect of the Anypoint Template is implemented on this XML, directed by one flow responsible of excecuting the logic.
-For the purpose of this particular Anypoint Template the *mainFlow* just executes the Batch Job which handles all its logic.
-]]>
+		
+Functional aspect of the template is implemented on this XML, directed by one flow responsible of excecuting the logic.
+For the purpose of this particular template the *mainFlow* just executes the Batch Job which handles all its logic.
+
 		</section>
 	</sections>
 </configuration>
