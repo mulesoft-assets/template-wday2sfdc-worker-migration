@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/workday http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
 	<flow name="businessLogicFlow" doc:id="d355fdf5-6e96-484e-905f-e7c320d5639f" >
-		<batch:job jobName="migrateObjectsBatch" doc:id="e171a7c4-f142-475b-b261-bcc52c08d54a" >
+		<batch:job jobName="migrateObjectsBatch" doc:id="e171a7c4-f142-475b-b261-bcc52c08d54a" blockSize="${page.size}">
         <batch:process-records >
             <batch:step name="getUserFromSalesforce" doc:id="d7600746-afe7-4b80-b9e4-403b638e0dbb" >
 					<ee:transform doc:name="Prepare Salesforce User" doc:id="12126070-0350-4243-aac1-9800843b94d2" >
