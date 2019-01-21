@@ -31,7 +31,7 @@ var id = randomInt(100000) as String
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<salesforce:query-single doc:name="Get test User from Salesforce" doc:id="74075f4f-7beb-4107-b874-c9470f058c5b" config-ref="Salesforce_Sfdc_config">
+		<salesforce:query-single doc:name="Get test User from Salesforce" doc:id="74075f4f-7beb-4107-b874-c9470f058c5b" config-ref="Salesforce_Sfdc_config" target="userData">
 			<salesforce:salesforce-query>SELECT  Id, Alias, TimeZoneSidKey, LocaleSidKey,EmailEncodingKey, ProfileId,LanguageLocaleKey, FirstName, LastName, Email FROM User WHERE Id = ':id'</salesforce:salesforce-query>
 			<salesforce:parameters><![CDATA[#[output application/java
 ---
@@ -39,16 +39,6 @@ var id = randomInt(100000) as String
 	"id" : p('test.salesforceID')
 }]]]></salesforce:parameters>
 		</salesforce:query-single>
-		<ee:transform doc:name="Save user data to var" doc:id="e9ecbfbb-c20e-4573-a9a6-b2e7bfd59934" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="userData" ><![CDATA[%dw 2.0
-output application/java
----
-payload]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
 		<munit-tools:mock-when doc:name="Mock email processor to avoid sending email"
 			doc:id="f70c5786-4e46-4529-9cdf-85b875f9dbcd" processor="email:send">
 			<munit-tools:then-return />
