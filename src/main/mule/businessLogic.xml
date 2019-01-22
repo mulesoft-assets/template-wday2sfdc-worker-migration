@@ -121,8 +121,18 @@ payload map
         </batch:on-complete>
     </batch:job>
 </flow>
-<flow name="queryFlow" doc:id="2b8c0a62-ac50-4c5b-beb3-8fc6eb4ae3d6" >
-    <ee:transform doc:name="Prepare Get Workers request" doc:id="9083a278-7135-47ec-a5ef-191b0be3e51d">
+<flow name="mainFlow" doc:id="2b8c0a62-ac50-4c5b-beb3-8fc6eb4ae3d6" >
+    <flow-ref doc:name="queryFlow" doc:id="bb6f88f6-1050-4732-90f0-5af234c21f81" name="queryFlow"/>
+	<flow-ref doc:name="businessLogicFlow" doc:id="3bdf5dfc-aa46-4327-af38-cac96568b506" name="businessLogicFlow"/>
+		
+				<error-handler >
+        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1594ce99-217e-4c70-8e29-1ea592e4b24f" type="ANY">
+            <flow-ref doc:name="errorHandlingFlow" doc:id="c8345d3a-7d7a-439a-bada-12a76969dc34" name="errorHandlingFlow" />
+        </on-error-propagate>
+    </error-handler>
+</flow>
+	<sub-flow name="queryFlow" doc:id="ab5b3d84-176e-4570-a957-c1e92ceb0981" >
+		<ee:transform doc:name="Prepare Get Workers request" doc:id="6bfe4767-f7d0-46a0-a434-7212718332ec">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/xml
@@ -150,8 +160,8 @@ ns ns0 urn:com.workday/bsvc
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<workday:human-resources operation="Get_Workers" doc:name="Human resources" doc:id="e64e928e-bd3a-4e09-ada6-fda481c67105" config-ref="Workday_Config_version_30" />
-		<ee:transform doc:name="Filter response" doc:id="5d0d8ac0-a788-436e-935d-add27e0285cf">
+		<workday:human-resources operation="Get_Workers" doc:name="Human resources" doc:id="0491422d-e8bf-4866-bdff-f35920d03848" config-ref="Workday_Config_version_30" />
+		<ee:transform doc:name="Filter response" doc:id="aef18299-ddd0-4c4e-b9bb-8321709f97e7">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -163,12 +173,8 @@ and $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.
 distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<error-handler >
-        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1594ce99-217e-4c70-8e29-1ea592e4b24f" type="ANY">
-            <flow-ref doc:name="errorHandlingFlow" doc:id="c8345d3a-7d7a-439a-bada-12a76969dc34" name="errorHandlingFlow" />
-        </on-error-propagate>
-    </error-handler>
-</flow>
+
+	</sub-flow>
 </mule>
 
 

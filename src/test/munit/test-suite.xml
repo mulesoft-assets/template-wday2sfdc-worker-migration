@@ -30,30 +30,18 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	</munit:before-test>
 	<munit:test name="test-suiteTest" description="MUnit Test" doc:id="d9b99079-7d37-49e0-ab3e-0da59aa105db" >
 		<munit:execution>
-			<flow-ref doc:name="mainFlow" doc:id="a3c71b06-712f-4c7f-acf2-382c88762b82" name="mainFlow"/>
-		
-		<ee:transform doc:name="Filter by only testing data"
-				doc:id="1b2daeee-671a-4612-9342-cdd6d53279fd">
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/java
----
-payload filter 
-($.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ==  p('test.wday.email')) ]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-			<set-variable value="#[payload[0].Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.First_Name]" doc:name="Set first name from Wday" doc:id="1b2a29a6-5665-48c9-b684-2cbe43a44072" variableName="wdayFirstName" />
-			<set-variable value="#[payload[0].Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.Last_Name]" doc:name="Set last name from Wday" doc:id="913557ef-2d84-4cf2-917a-54dbcba1da5e" variableName="wdayLastName" />
-			<ee:transform doc:name="Set email from Salesforce" doc:id="30871ca6-4f70-4148-82ff-38f095c0700d" >
+			<flow-ref doc:name="queryFlow" doc:id="a3c71b06-712f-4c7f-acf2-382c88762b82" name="queryFlow"/>
+			<ee:transform doc:name="Filter worker and Set wdayWorker" doc:id="cc9426fc-7377-4f07-9b18-cad52b91cdf9" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
+var filterWorker = payload filter ($.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ==  p('test.wday.email')) 
 ---
 [{
-  "Worker_Descriptor": payload[0]."Worker_Descriptor",
+  "Worker_Descriptor": filterWorker[0]."Worker_Descriptor",
   "Worker_Data": {
     "Personal_Data": {
-      "Name_Data": payload[0].Worker_Data.Personal_Data.Name_Data,
+      "Name_Data": filterWorker[0].Worker_Data.Personal_Data.Name_Data,
       "Contact_Data": {
         "Email_Address_Data": {
           "Email_Address": vars.userData.Email
@@ -63,6 +51,16 @@ output application/java
   }
 }]]]></ee:set-payload>
 				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="wdayWorker" ><![CDATA[%dw 2.0
+output application/java
+var contact = payload[0].Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data
+---
+{
+	FirstName : contact.First_Name,
+	LastName : contact.Last_Name
+}]]></ee:set-variable>
+				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="Flow-ref to businessLogicFlow" doc:id="20701d84-a725-441d-98de-fa4dc2c417e3" name="businessLogicFlow"/>
 			<scripting:execute engine="groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="9e2b6ce2-11a8-4c76-a1e4-c910faf8efa7" >
@@ -82,8 +80,8 @@ output application/java
 
 </munit:execution>
 		<munit:validation >
-			<munit-tools:assert-that doc:name="Check first name" doc:id="ebe0d750-7ae2-4dd2-ae48-c6670b79976a" expression="#[payload.FirstName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayFirstName)]"/>
-			<munit-tools:assert-that doc:name="Check last name" doc:id="9c2d3f83-db6f-45d4-82e7-03bf991bbb3e" expression="#[payload.LastName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayLastName)]"/>
+			<munit-tools:assert-that doc:name="Check first name" doc:id="ebe0d750-7ae2-4dd2-ae48-c6670b79976a" expression="#[payload.FirstName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.FirstName)]"/>
+			<munit-tools:assert-that doc:name="Check last name" doc:id="9c2d3f83-db6f-45d4-82e7-03bf991bbb3e" expression="#[payload.LastName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.LastName)]"/>
 		</munit:validation>
 	</munit:test>
 	
