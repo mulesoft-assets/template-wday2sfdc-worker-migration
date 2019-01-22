@@ -13,8 +13,126 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/workday http://www.mulesoft.org/schema/mule/workday/current/mule-workday.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
-	<flow name="businessLogicFlow" doc:id="884f86c5-66e1-4701-bb9b-594c2a60abf3" >
-		<ee:transform doc:name="Prepare Get Workers request" doc:id="0e2062da-4a79-471a-bbf5-80038e92ce9b">
+	<flow name="businessLogicFlow" doc:id="d355fdf5-6e96-484e-905f-e7c320d5639f" >
+		<batch:job jobName="migrateObjectsBatch" doc:id="e171a7c4-f142-475b-b261-bcc52c08d54a" blockSize="${page.size}">
+        <batch:process-records >
+            <batch:step name="getUserFromSalesforce" doc:id="d7600746-afe7-4b80-b9e4-403b638e0dbb" >
+					<ee:transform doc:name="Prepare Salesforce User" doc:id="12126070-0350-4243-aac1-9800843b94d2" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var FirstName = payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.First_Name
+var LastName = payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.Last_Name
+---
+{
+	// Each Username should be UNIQUE even between different sandboxes of a single instance 
+ 	// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up 
+	Username          : payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ++ ".target",
+	LastName          : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.Last_Name default "",
+	FirstName         : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.First_Name default "",
+	Email             : if (payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data != null) payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address else null,
+	Alias             : (if (sizeOf(FirstName) > 2) FirstName[0 to 2] else FirstName )++ (if (sizeOf(LastName ) > 3) LastName [0 to 3] else LastName  ),
+	TimeZoneSidKey    : p('sfdc.timeZoneSidKey'),
+	LocaleSidKey      : if (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Locale_Reference != null) payload.Worker_Data.User_Account_Data.Locale_Reference.ID[-1].value else p('sfdc.localeSidKey'),
+	EmailEncodingKey  : p('sfdc.emailEncodingKey'),
+	
+	// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance) 
+ 	// You should change these IDs to the ones corresponding to your SalesForce instances profile IDs 
+	ProfileId         : p('sfdc.profileId'),
+	LanguageLocaleKey : if (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference != null) payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference.ID[0 to -1] else p('sfdc.languageLocaleKey')
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<salesforce:query doc:name="Query User in Salesforce" doc:id="e554604c-22a6-4ecb-a188-9ff47142ea27" config-ref="Salesforce_Sfdc_config" target="UserInSFDC" targetValue="#[payload[0]]">
+						<salesforce:salesforce-query >SELECT Id FROM User WHERE Email = ':email'</salesforce:salesforce-query>
+						<salesforce:parameters ><![CDATA[#[output applicaton/java
+---
+{
+	"email" : payload.Email
+}]]]></salesforce:parameters>
+					</salesforce:query>
+					<ee:transform doc:name="Push Id to payload" doc:id="c9cf9efb-9ab5-4224-a29f-f57439a8e0d9" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {(Id: vars.UserInSFDC.Id) if vars.UserInSFDC.Id != null}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+            </batch:step>
+            <batch:step name="upsertUsersInSalesforce" doc:id="884d0a38-3f2f-4988-82d1-cc3ae9ab811a">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="3b52cfde-1c4c-4782-8778-493fa303b201" size="100">
+						<ee:transform doc:name="Prepare payload for upsert" doc:id="43614469-9da3-47e3-b4ef-58f3ba321bd9">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map 
+{
+	Id                : $.Id,
+	Username          : $.Username,
+	LastName          : $.LastName,
+	FirstName         : $.FirstName,
+	Email             : $.Email,
+	Alias             : $.Alias,
+	TimeZoneSidKey    : $.TimeZoneSidKey,
+	LocaleSidKey      : $.LocaleSidKey,
+	EmailEncodingKey  : $.EmailEncodingKey,
+	ProfileId         : $.ProfileId,
+	LanguageLocaleKey : $.LanguageLocaleKey
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+						<salesforce:upsert doc:name="Upsert users" doc:id="1b1bf231-e33f-471a-a07b-d9c8bca0b666" config-ref="Salesforce_Sfdc_config" externalIdFieldName="Id" type="User"/>
+					</batch:aggregator>
+            </batch:step>
+        </batch:process-records>
+        <batch:on-complete >
+            <scatter-gather doc:name="Scatter-Gather" doc:id="7146cb05-ac5c-44c7-b680-3195680805e2">
+                <route>
+                    <logger level="INFO" doc:name="Migration process has finished!" doc:id="f22b6ccf-ef8c-4a6f-8f62-ab2d5eaa2758" message="Migration process has finished!" />
+                </route>
+                <route>
+                    <ee:transform doc:name="Prepare migration result email"
+                                  doc:id="98f1e0ae-6e69-4b2d-905d-6b24f9da355f">
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+ output text/plain
+ ---
+ "Migration Report: \n"
+
+ ++ "\n Time [milliseconds]: " 		++ payload.elapsedTimeInMillis!
+ ++ "\n Total Records: "				++ payload.totalRecords!
+ ++ "\n Successful Records: "		++ payload.successfulRecords!
+ ++ "\n Failed Records: "			++ payload.failedRecords!
+ ++ "\n Loaded Records: "			++ payload.loadedRecords!
+ ++ "\n Processed Records: " 		++ payload.processedRecords!]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                    <email:send config-ref="Gmail_SMTP" doc:name="Send migration result email"
+                                doc:id="bdc0c786-c464-44ca-b162-92c5574cfaa6" fromAddress="${mail.from}"
+                                subject="${mail.subject}">
+                        <email:to-addresses>
+                            <email:to-address value="${mail.to}" />
+                        </email:to-addresses>
+                    </email:send>
+                </route>
+            </scatter-gather>
+        </batch:on-complete>
+    </batch:job>
+</flow>
+<flow name="mainFlow" doc:id="2b8c0a62-ac50-4c5b-beb3-8fc6eb4ae3d6" >
+    <flow-ref doc:name="queryFlow" doc:id="bb6f88f6-1050-4732-90f0-5af234c21f81" name="queryFlow"/>
+	<flow-ref doc:name="businessLogicFlow" doc:id="3bdf5dfc-aa46-4327-af38-cac96568b506" name="businessLogicFlow"/>
+		
+				<error-handler >
+        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1594ce99-217e-4c70-8e29-1ea592e4b24f" type="ANY">
+            <flow-ref doc:name="errorHandlingFlow" doc:id="c8345d3a-7d7a-439a-bada-12a76969dc34" name="errorHandlingFlow" />
+        </on-error-propagate>
+    </error-handler>
+</flow>
+	<sub-flow name="queryFlow" doc:id="ab5b3d84-176e-4570-a957-c1e92ceb0981" >
+		<ee:transform doc:name="Prepare Get Workers request" doc:id="6bfe4767-f7d0-46a0-a434-7212718332ec">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/xml
@@ -42,132 +160,21 @@ ns ns0 urn:com.workday/bsvc
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<workday:invoke service="Human_Resources" operation="Get_Workers" doc:name="Get Workers from Workday" doc:id="e0ba44f9-fbaa-4155-b81e-f3c463198536" config-ref="Workday_Config" />
-		<ee:transform doc:name="Filter response" doc:id="29e11f39-d7ad-4e29-b095-3d7ea3d22f09" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<workday:human-resources operation="Get_Workers" doc:name="Human resources" doc:id="0491422d-e8bf-4866-bdff-f35920d03848" config-ref="Workday_Config_version_30" />
+		<ee:transform doc:name="Filter response" doc:id="aef18299-ddd0-4c4e-b9bb-8321709f97e7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ns ns0 urn:com.workday/bsvc
 ---
-(payload.body.ns0#Get_Workers_Response.ns0#Response_Data.*ns0#Worker
+(payload.ns0#Get_Workers_Response.ns0#Response_Data.*ns0#Worker
 filter ($.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != null 
 and $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != ''))
 distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<batch:job jobName="migrateObjectsBatch" doc:id="79b373e6-1aeb-43a9-9dfe-8ac0d2f31fdc" >
-        <batch:process-records >
-            <batch:step name="getUserFromSalesforce" doc:id="232087de-e311-49c1-a890-439c65ea1af2" >
-					<ee:transform doc:name="Prepare Salesforce User" doc:id="95327bc6-8717-42f7-affb-db714e8dc3b1" >
-						<ee:message >
-							<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-{
-	// Each Username should be UNIQUE even between different sandboxes of a single instance 
- 	// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up 
-	Username          : payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ++ ".target",
-	LastName          : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.Last_Name default "",
-	FirstName         : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.First_Name default "",
-	Email             : if (payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data != null) payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address else null,
-	Alias             : payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.First_Name[0 to 2] ++ payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.Last_Name[0 to 3],
-	TimeZoneSidKey    : p('sfdc.timeZoneSidKey'),
-	LocaleSidKey      : if (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Locale_Reference != null) payload.Worker_Data.User_Account_Data.Locale_Reference.ID[-1].value else p('sfdc.localeSidKey'),
-	EmailEncodingKey  : p('sfdc.emailEncodingKey'),
-	
-	// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance) 
- 	// You should change these IDs to the ones corresponding to your SalesForce instances profile IDs 
-	ProfileId         : p('sfdc.profileId'),
-	LanguageLocaleKey : if (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference != null) payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference.ID[0 to -1] else p('sfdc.languageLocaleKey')
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-					<salesforce:query doc:name="Query User in Salesforce" doc:id="f307e364-2099-4d0d-ac50-8f5e5f7cf0c1" config-ref="Salesforce_Sfdc_config" target="UserInSFDC" targetValue="#[payload[0]]">
-						<salesforce:salesforce-query >SELECT Id FROM User WHERE Email = ':email'</salesforce:salesforce-query>
-						<salesforce:parameters ><![CDATA[#[output applicaton/java
----
-{
-	"email" : payload.Email
-}]]]></salesforce:parameters>
-					</salesforce:query>
-					<ee:transform doc:name="Push Id to payload" doc:id="4f858c9f-88c0-4766-a818-333bebbd9ee3" >
-						<ee:message >
-							<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-payload ++ {(Id: vars.UserInSFDC.Id) if vars.UserInSFDC.Id != null}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-            </batch:step>
-            <batch:step name="upsertUsersInSalesforce" doc:id="78a74ab4-9b91-416d-985a-acda2ac377eb">
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="bd3d1bac-9abf-4d3d-85ed-ba93b05ece10" size="100">
-						<ee:transform doc:name="Prepare payload for upsert" doc:id="79c11675-b3f7-4eef-bfaa-402d80a709dd">
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/java
----
-payload map 
-{
-	Id                : $.Id,
-	Username          : $.Username,
-	LastName          : $.LastName,
-	FirstName         : $.FirstName,
-	Email             : $.Email,
-	Alias             : $.Alias,
-	TimeZoneSidKey    : $.TimeZoneSidKey,
-	LocaleSidKey      : $.LocaleSidKey,
-	EmailEncodingKey  : $.EmailEncodingKey,
-	ProfileId         : $.ProfileId,
-	LanguageLocaleKey : $.LanguageLocaleKey
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-						<salesforce:upsert doc:name="Upsert users" doc:id="1af28f5d-ba5e-4af5-bda3-3bd0e736885c" config-ref="Salesforce_Sfdc_config" externalIdFieldName="Id" type="User"/>
-					</batch:aggregator>
-            </batch:step>
-        </batch:process-records>
-        <batch:on-complete >
-            <scatter-gather doc:name="Scatter-Gather" doc:id="ef2964ef-0b85-4c6c-a5ee-b834df639e7b">
-                <route>
-                    <logger level="INFO" doc:name="Migration process has finished!" doc:id="b7575d38-7dbd-4602-9186-1bbb25234896" message="Migration process has finished!" />
-                </route>
-                <route>
-                    <ee:transform doc:name="Prepare migration result email"
-                                  doc:id="c84b4bc4-5a65-41c1-9d0c-f1ebd3d8db7a">
-                        <ee:message>
-                            <ee:set-payload><![CDATA[%dw 2.0
- output text/plain
- ---
- "Migration Report: \n"
 
- ++ "\n Time [milliseconds]: " 		++ payload.elapsedTimeInMillis!
- ++ "\n Total Records: "				++ payload.totalRecords!
- ++ "\n Successful Records: "		++ payload.successfulRecords!
- ++ "\n Failed Records: "			++ payload.failedRecords!
- ++ "\n Loaded Records: "			++ payload.loadedRecords!
- ++ "\n Processed Records: " 		++ payload.processedRecords!]]></ee:set-payload>
-                        </ee:message>
-                    </ee:transform>
-                    <email:send config-ref="Gmail_SMTP" doc:name="Send migration result email"
-                                doc:id="5896eaa9-dd10-47a2-a6fc-6319b11dbd06" fromAddress="${mail.from}"
-                                subject="${mail.subject}">
-                        <email:to-addresses>
-                            <email:to-address value="${mail.to}" />
-                        </email:to-addresses>
-                    </email:send>
-                </route>
-            </scatter-gather>
-        </batch:on-complete>
-    </batch:job>
-</flow>
-<flow name="mainFlow" doc:id="7c0a5bef-b3d5-442f-bff3-10d038f69a5e" >
-    <flow-ref doc:name="businessLogicFlow" doc:id="91360ede-4d71-44c7-9b64-8ee762e04ea0" name="businessLogicFlow"/>
-    <error-handler >
-        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="488b507d-e26c-4c56-8759-8bb4f6645d71" type="ANY">
-            <flow-ref doc:name="errorHandlingFlow" doc:id="afdaf73c-0137-4d60-84f6-5c41234771a3" name="errorHandlingFlow" />
-        </on-error-propagate>
-    </error-handler>
-</flow>
+	</sub-flow>
 </mule>
 
 

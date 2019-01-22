@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:workday="http://www.mulesoft.org/schema/mule/workday"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd 
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/workday http://www.mulesoft.org/schema/mule/workday/current/mule-workday.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<munit:config name="test-suite.xml" />
+	<configuration-properties doc:name="Configuration properties" doc:id="73eb7f68-ae5b-4537-827c-d69d8f3043c9" file="mule.test.properties" />
+	<munit:before-test name="test-suiteBefore_Test" description="Before tests actions" doc:id="444caf26-bc31-4080-b99b-2d39132dab82">
+		<salesforce:query-single doc:name="Get test User from Salesforce" doc:id="74075f4f-7beb-4107-b874-c9470f058c5b" config-ref="Salesforce_Sfdc_config" target="userData">
+			<salesforce:salesforce-query>SELECT  Id, Alias, TimeZoneSidKey, LocaleSidKey,EmailEncodingKey, ProfileId,LanguageLocaleKey, FirstName, LastName, Email FROM User WHERE Id = ':id'</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"id" : p('test.salesforceID')
+}]]]></salesforce:parameters>
+		</salesforce:query-single>
+		<munit-tools:mock-when doc:name="Mock email processor to avoid sending email"
+			doc:id="f70c5786-4e46-4529-9cdf-85b875f9dbcd" processor="email:send">
+			<munit-tools:then-return />
+		</munit-tools:mock-when>
+	</munit:before-test>
+	<munit:test name="test-suiteTest" description="MUnit Test" doc:id="d9b99079-7d37-49e0-ab3e-0da59aa105db" >
+		<munit:execution>
+			<flow-ref doc:name="queryFlow" doc:id="a3c71b06-712f-4c7f-acf2-382c88762b82" name="queryFlow"/>
+			<ee:transform doc:name="Filter worker and Set wdayWorker" doc:id="cc9426fc-7377-4f07-9b18-cad52b91cdf9" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var filterWorker = payload filter ($.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ==  p('test.wday.email')) 
+---
+[{
+  "Worker_Descriptor": filterWorker[0]."Worker_Descriptor",
+  "Worker_Data": {
+    "Personal_Data": {
+      "Name_Data": filterWorker[0].Worker_Data.Personal_Data.Name_Data,
+      "Contact_Data": {
+        "Email_Address_Data": {
+          "Email_Address": vars.userData.Email
+        }
+      }
+    }
+  }
+}]]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="wdayWorker" ><![CDATA[%dw 2.0
+output application/java
+var contact = payload[0].Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data
+---
+{
+	FirstName : contact.First_Name,
+	LastName : contact.Last_Name
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Flow-ref to businessLogicFlow" doc:id="20701d84-a725-441d-98de-fa4dc2c417e3" name="businessLogicFlow"/>
+			<scripting:execute engine="groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="9e2b6ce2-11a8-4c76-a1e4-c910faf8efa7" >
+				<scripting:code >sleep(10000)</scripting:code>
+			</scripting:execute>
+					<salesforce:query-single doc:name="Get migrated TestRecord" doc:id="dd2570b0-0c59-45ae-baf7-573fe936bf6e" config-ref="Salesforce_Sfdc_config">
+				<salesforce:salesforce-query >SELECT Id, FirstName, LastName, Email FROM User WHERE Email = ':email'</salesforce:salesforce-query>
+				<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"email" : vars.userData.Email
+}]]]></salesforce:parameters>
+			</salesforce:query-single>
+			<set-variable
+			value='#[payload.Id]'
+			doc:name="Set Id from Salesforce" doc:id="c9f69c5c-ba0f-4aea-bc6e-cfc75e35a497" variableName="migratedSalesforceID"/>
+
+</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Check first name" doc:id="ebe0d750-7ae2-4dd2-ae48-c6670b79976a" expression="#[payload.FirstName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.FirstName)]"/>
+			<munit-tools:assert-that doc:name="Check last name" doc:id="9c2d3f83-db6f-45d4-82e7-03bf991bbb3e" expression="#[payload.LastName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.LastName)]"/>
+		</munit:validation>
+	</munit:test>
+	
+<munit:after-test name="test-suiteAfter_Test"
+		description="After tests actions" doc:id="e09397bd-2b25-4787-8f26-b8f5004bb08e">
+		<salesforce:update type="User" doc:name="Update salesforce user on previous data" doc:id="326cfd64-b76f-4832-8b8f-867e37a4d84c" config-ref="Salesforce_Sfdc_config">
+			<salesforce:records ><![CDATA[#[[vars.userData]]]]></salesforce:records>
+		</salesforce:update>
+	</munit:after-test>
+
+
+
+</mule>
