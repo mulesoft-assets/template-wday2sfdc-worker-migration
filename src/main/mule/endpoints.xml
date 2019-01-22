@@ -13,6 +13,8 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			path="/migrate" />
 		<flow-ref doc:name="mainFlow" doc:id="9c665dd4-7df3-4e0d-a1eb-01ac63781ce7"
 			name="mainFlow" />
+		<flow-ref doc:name="businessLogicFlow" doc:id="3d590b10-bb5c-4e2f-b760-4a1e55cdf879" name="businessLogicFlow"/>
+		
 		<ee:transform doc:name="Build response"
 			doc:id="2abddd58-c707-435a-a004-ec5ba9107429">
 			<ee:message>

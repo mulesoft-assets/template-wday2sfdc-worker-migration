@@ -163,7 +163,6 @@ and $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.
 distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<flow-ref doc:name="businessLogicFlow" doc:id="dda7c13a-4c7c-4865-b484-162dd44bb2fa" name="businessLogicFlow"/>
 		<error-handler >
         <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1594ce99-217e-4c70-8e29-1ea592e4b24f" type="ANY">
             <flow-ref doc:name="errorHandlingFlow" doc:id="c8345d3a-7d7a-439a-bada-12a76969dc34" name="errorHandlingFlow" />
