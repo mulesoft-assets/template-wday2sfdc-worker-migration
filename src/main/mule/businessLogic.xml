@@ -121,7 +121,7 @@ payload map
         </batch:on-complete>
     </batch:job>
 </flow>
-<flow name="mainFlow" doc:id="2b8c0a62-ac50-4c5b-beb3-8fc6eb4ae3d6" >
+<flow name="queryFlow" doc:id="2b8c0a62-ac50-4c5b-beb3-8fc6eb4ae3d6" >
     <ee:transform doc:name="Prepare Get Workers request" doc:id="9083a278-7135-47ec-a5ef-191b0be3e51d">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
