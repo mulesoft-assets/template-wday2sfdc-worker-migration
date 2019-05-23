@@ -25,8 +25,8 @@ var FirstName = payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.
 var LastName = payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data.Last_Name
 ---
 {
-	// Each Username should be UNIQUE even between different sandboxes of a single instance 
- 	// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up 
+	// Each Username should be UNIQUE even between different sandboxes of a single instance
+ 	// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up
 	Username          : payload.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ++ ".target",
 	LastName          : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.Last_Name default "",
 	FirstName         : payload.Worker_Data.Personal_Data.Name_Data.Legal_Name_Data.Name_Detail_Data.First_Name default "",
@@ -35,9 +35,9 @@ var LastName = payload.Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.N
 	TimeZoneSidKey    : p('sfdc.timeZoneSidKey'),
 	LocaleSidKey      : if (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Locale_Reference != null) payload.Worker_Data.User_Account_Data.Locale_Reference.ID[-1].value else p('sfdc.localeSidKey'),
 	EmailEncodingKey  : p('sfdc.emailEncodingKey'),
-	
-	// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance) 
- 	// You should change these IDs to the ones corresponding to your SalesForce instances profile IDs 
+
+	// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
+ 	// You should change these IDs to the ones corresponding to your SalesForce instances profile IDs
 	ProfileId         : p('sfdc.profileId'),
 	LanguageLocaleKey : if (payload.Worker_Data.User_Account_Data != null and payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference != null) payload.Worker_Data.User_Account_Data.Default_Display_Language_Reference.ID[0 to -1] else p('sfdc.languageLocaleKey')
 }]]></ee:set-payload>
@@ -61,13 +61,13 @@ payload ++ {(Id: vars.UserInSFDC.Id) if vars.UserInSFDC.Id != null}]]></ee:set-p
 					</ee:transform>
             </batch:step>
             <batch:step name="upsertUsersInSalesforce" doc:id="884d0a38-3f2f-4988-82d1-cc3ae9ab811a">
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="3b52cfde-1c4c-4782-8778-493fa303b201" size="100">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="3b52cfde-1c4c-4782-8778-493fa303b201" size="${aggregator.size}">
 						<ee:transform doc:name="Prepare payload for upsert" doc:id="43614469-9da3-47e3-b4ef-58f3ba321bd9">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
-payload map 
+payload map
 {
 	Id                : $.Id,
 	Username          : $.Username,
@@ -124,7 +124,7 @@ payload map
 <flow name="mainFlow" doc:id="2b8c0a62-ac50-4c5b-beb3-8fc6eb4ae3d6" >
     <flow-ref doc:name="queryFlow" doc:id="bb6f88f6-1050-4732-90f0-5af234c21f81" name="queryFlow"/>
 	<flow-ref doc:name="businessLogicFlow" doc:id="3bdf5dfc-aa46-4327-af38-cac96568b506" name="businessLogicFlow"/>
-		
+
 				<error-handler >
         <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1594ce99-217e-4c70-8e29-1ea592e4b24f" type="ANY">
             <flow-ref doc:name="errorHandlingFlow" doc:id="c8345d3a-7d7a-439a-bada-12a76969dc34" name="errorHandlingFlow" />
@@ -168,7 +168,7 @@ output application/java
 ns ns0 urn:com.workday/bsvc
 ---
 (payload.ns0#Get_Workers_Response.ns0#Response_Data.*ns0#Worker
-filter ($.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != null 
+filter ($.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != null
 and $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address != ''))
 distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Address_Data.ns0#Email_Address]]></ee:set-payload>
 			</ee:message>
@@ -176,6 +176,3 @@ distinctBy $.ns0#Worker_Data.ns0#Personal_Data.ns0#Contact_Data.ns0#Email_Addres
 
 	</sub-flow>
 </mule>
-
-
-        

@@ -5,7 +5,7 @@
 	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
 	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
-http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd 
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
 		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 		http://www.mulesoft.org/schema/mule/workday http://www.mulesoft.org/schema/mule/workday/current/mule-workday.xsd
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
@@ -35,7 +35,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
-var filterWorker = payload filter ($.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ==  p('test.wday.email')) 
+var filterWorker = payload filter ($.Worker_Data.Personal_Data.Contact_Data.Email_Address_Data.Email_Address ==  p('test.wday.email'))
 ---
 [{
   "Worker_Descriptor": filterWorker[0]."Worker_Descriptor",
@@ -80,11 +80,11 @@ var contact = payload[0].Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data
 
 </munit:execution>
 		<munit:validation >
-			<munit-tools:assert-that doc:name="Check first name" doc:id="ebe0d750-7ae2-4dd2-ae48-c6670b79976a" expression="#[payload.FirstName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.FirstName)]"/>
-			<munit-tools:assert-that doc:name="Check last name" doc:id="9c2d3f83-db6f-45d4-82e7-03bf991bbb3e" expression="#[payload.LastName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.LastName)]"/>
+			<munit-tools:assert-that doc:name="Check first name" doc:id="ebe0d750-7ae2-4dd2-ae48-c6670b79976a" expression="#[payload.FirstName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.FirstName)]" message="Check first name failed"/>
+			<munit-tools:assert-that doc:name="Check last name" doc:id="9c2d3f83-db6f-45d4-82e7-03bf991bbb3e" expression="#[payload.LastName]" is="#[MunitTools::equalToIgnoringWhiteSpace(vars.wdayWorker.LastName)]" message="Check last name failed"/>
 		</munit:validation>
 	</munit:test>
-	
+
 <munit:after-test name="test-suiteAfter_Test"
 		description="After tests actions" doc:id="e09397bd-2b25-4787-8f26-b8f5004bb08e">
 		<salesforce:update type="User" doc:name="Update salesforce user on previous data" doc:id="326cfd64-b76f-4832-8b8f-867e37a4d84c" config-ref="Salesforce_Sfdc_config">
