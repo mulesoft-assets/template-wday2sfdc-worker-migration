@@ -1,5 +1,5 @@
 
-# Anypoint Template: Workday to Salesforce Worker Migration	
+# Anypoint Template: Workday to Salesforce Worker Migration
 
 <!-- Header (start) -->
 Moves a large set of workers from Workday to Salesforce. Trigger with an HTTP call either manually or programmatically. Workers are upserted so that the migration can be run multiple times without creating duplicate records. This template uses batch to efficiently process many records at a time.
@@ -8,12 +8,12 @@ Moves a large set of workers from Workday to Salesforce. Trigger with an HTTP ca
 <!-- Header (end) -->
 
 # License Agreement
-This template is subject to the conditions of the <a href="https://s3.amazonaws.com/templates-examples/AnypointTemplateLicense.pdf">MuleSoft License Agreement</a>. Review the terms of the license before downloading and using this template. You can use this template for free with the Mule Enterprise Edition, CloudHub, or as a trial in Anypoint Studio. 
+This template is subject to the conditions of the <a href="https://s3.amazonaws.com/templates-examples/AnypointTemplateLicense.pdf">MuleSoft License Agreement</a>. Review the terms of the license before downloading and using this template. You can use this template for free with the Mule Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
 # Use Case
 <!-- Use Case (start) -->
 As a Workday admin I want to migrate workers to Salesforce.
 
-This template serves as a foundation for the process of migrating Worker from a Workday instance to Salesforce, being able to specify filtering criteria and desired behavior if a user already exists in the destination system. 
+This template serves as a foundation for the process of migrating Worker from a Workday instance to Salesforce, being able to specify filtering criteria and desired behavior if a user already exists in the destination system.
 
 As implemented, this template leverages the Mule batch module. First the template queries Workday for all the existing active workers that match the filtering criteria. The criteria is based on manipulations starting from a date.
 The last step of the Process stage groups the workers and creates them in Salesforce. Finally, during the On Complete stage the template outputs statistics data to the console and sends a notification email with the results of the batch execution. The final report in CSV format is sent to the email addresses you configure in the `mule.*.properties` file.
@@ -99,7 +99,7 @@ After you import your template into Anypoint Studio, follow these steps to run i
 <!-- Running on Studio (end) -->
 
 ### Running on Mule Standalone
-Update the properties in one of the property files, for example in mule.prod.properties, and run your app with a corresponding environment variable. In this example, use `mule.env=prod`. 
+Update the properties in one of the property files, for example in mule.prod.properties, and run your app with a corresponding environment variable. In this example, use `mule.env=prod`.
 After this, to trigger the use case you just need to browse to the local HTTP connector with the port you configured in the properties file. If this is, for instance, `9090` browse to: `http://localhost:9090/migrate` and this outputs a summary report and sends it in email.
 
 ## Running on CloudHub
@@ -128,6 +128,7 @@ To use this template, configure properties such as credentials, configurations, 
 - wday.password `secret`
 - wday.tenant `example_pt1`
 - wday.hostname `impl-cc.workday.com`
+- wday.responseTimeout `25000`
 
 #### Salesforce Connector
 
@@ -160,8 +161,8 @@ To use this template, configure properties such as credentials, configurations, 
 <!-- API Calls (start) -->
 Salesforce imposes limits on the number of API calls that can be made. Therefore calculating this amount may be an important factor to consider. The template calls to the API can be calculated using the formula:
 
-- *** X + X / 200*** -- Where ***X*** is the number of users to synchronize on each run. 
-- Divide by ***200*** because by default, users are gathered in groups of 200 for each upsert API call in the commit step. Also consider that this calls are executed repeatedly every polling cycle.	
+- *** X + X / 200*** -- Where ***X*** is the number of users to synchronize on each run.
+- Divide by ***200*** because by default, users are gathered in groups of 200 for each upsert API call in the commit step. Also consider that this calls are executed repeatedly every polling cycle.
 
 For instance if 10 records are fetched from origin instance, then 11 API calls are made (10 + 1).
 <!-- API Calls (end) -->
