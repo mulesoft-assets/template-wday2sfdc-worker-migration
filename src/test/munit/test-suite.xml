@@ -31,7 +31,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	<munit:test name="test-suiteTest" description="MUnit Test" doc:id="d9b99079-7d37-49e0-ab3e-0da59aa105db" >
 		<munit:execution>
 			<flow-ref doc:name="queryFlow" doc:id="a3c71b06-712f-4c7f-acf2-382c88762b82" name="queryFlow"/>
-			<ee:transform doc:name="Filter worker and Set wdayWorker" doc:id="cc9426fc-7377-4f07-9b18-cad52b91cdf9" >
+			<ee:transform doc:name="Filter worker" doc:id="82888fa9-c035-46e3-bca7-a5ac24ca1bd5" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -51,10 +51,15 @@ var filterWorker = payload filter ($.Worker_Data.Personal_Data.Contact_Data.Emai
   }
 }]]]></ee:set-payload>
 				</ee:message>
+			</ee:transform>
+			<ee:transform doc:name="Set wdayWorker" doc:id="cc9426fc-7377-4f07-9b18-cad52b91cdf9" >
+				<ee:message >
+				</ee:message>
 				<ee:variables >
 					<ee:set-variable variableName="wdayWorker" ><![CDATA[%dw 2.0
 output application/java
 var contact = payload[0].Worker_Data.Personal_Data.Name_Data.Preferred_Name_Data.Name_Detail_Data
+
 ---
 {
 	FirstName : contact.First_Name,
