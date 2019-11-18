@@ -128,7 +128,6 @@ To use this template, configure properties such as credentials, configurations, 
 - wday.password `secret`
 - wday.tenant `example_pt1`
 - wday.hostname `impl-cc.workday.com`
-- wday.responseTimeout `25000`
 
 #### Salesforce Connector
 
